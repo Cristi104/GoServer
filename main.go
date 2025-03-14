@@ -22,7 +22,16 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	rows.Close()
 }
 
+func handlerFunc(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "static/home.html")
+}
+
 func main() {
+	fs := http.FileServer(http.Dir("static"))
+	http.Handle("/static/", http.StripPrefix("/static/", fs))
+
+	http.HandleFunc("/", handlerFunc)
 	http.HandleFunc("/view/", handler)
+
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
