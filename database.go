@@ -81,6 +81,17 @@ type User struct {
 	password string
 }
 
+func getUser(id int64) (*User, error) {
+	var user User
+
+	err := DB.QueryRow("SELECT * FROM users WHERE id = ?", id).Scan(&user.id, &user.username, &user.email, &user.password)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
 func getUsers(username string) ([]*User, error) {
 	rows, err := DB.Query("SELECT * FROM users WHERE username = ?", username)
 	if err != nil {
@@ -122,21 +133,26 @@ func getUserLogin(email string, password string) (*User, error) {
 	return &user, nil
 }
 
-func makeUser(username string, email string, password string) (*User, error) {
+func NewUser(username string, email string, password string) (*User, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = DB.Query("INSERT INTO users(id, username, email, password) VALUES(NULL, ?, ?, ?)", username, email, bytes)
+	result, err := DB.Exec("INSERT INTO users(id, username, email, password) VALUES(NULL, ?, ?, ?)", username, email, bytes)
 	if err != nil {
 		return nil, err
 	}
 
-	return getUserLogin(email, password)
+	id, err := result.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+
+	return getUser(id)
 }
 
-func (u *User) deleteUser() error {
+func (u *User) delete() error {
 	_, err := DB.Query("DELETE FROM users WHERE id = ?", u.id)
 	if err != nil {
 		return err
@@ -154,7 +170,7 @@ func (u *User) setUsername(username string) error {
 
 	u.username = username
 
-	_, err := DB.Query("UPDATE users SET username = ? WHERE id = ?", username, u.id)
+	_, err := DB.Exec("UPDATE users SET username = ? WHERE id = ?", username, u.id)
 	if err != nil {
 		return err
 	}
@@ -168,7 +184,7 @@ func (u *User) setEmail(email string) error {
 
 	u.email = email
 
-	_, err := DB.Query("UPDATE users SET email = ? WHERE id = ?", email, u.id)
+	_, err := DB.Exec("UPDATE users SET email = ? WHERE id = ?", email, u.id)
 	if err != nil {
 		return err
 	}
@@ -187,7 +203,7 @@ func (u *User) setPassword(password string) error {
 
 	u.password = string(bytes)
 
-	_, err = DB.Query("UPDATE users SET password = ? WHERE id = ?", bytes, u.id)
+	_, err = DB.Exec("UPDATE users SET password = ? WHERE id = ?", bytes, u.id)
 	if err != nil {
 		return err
 	}
@@ -196,4 +212,46 @@ func (u *User) setPassword(password string) error {
 
 func (u *User) String() string {
 	return fmt.Sprintf("%d, %s, %s, %s", u.id, u.username, u.email, u.password)
+}
+
+type Message struct {
+	id         int64
+	sendDate   string
+	body       string
+	senderId   int64
+	receiverId int64
+}
+
+func getMessage(id int64) (*Message, error) {
+	var message Message
+
+	err := DB.QueryRow("SELECT * FROM messages WHERE id = ?", id).Scan(&message.id, &message.sendDate, &message.body, &message.senderId, &message.receiverId)
+	if err != nil {
+		return nil, err
+	}
+
+	return &message, nil
+}
+
+func NewMessage(sender *User, receiver *User, body string) (*Message, error) {
+	result, err := DB.Exec("INSERT INTO messages(id, send_date, body, sender_id, receiver_id) VALUES(NULL, SYSDATE(), ?, ?, ?)", body, sender.id, receiver.id)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+
+	return getMessage(id)
+}
+
+func (m *Message) delete() error {
+	_, err := DB.Exec("DELETE FROM messages WHERE id = ?", m.id)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
