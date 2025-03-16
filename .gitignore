@@ -46,4 +46,4 @@ go.work
 # End of https://www.toptal.com/developers/gitignore/api/go,visualstudiocode
 .vscode/launch.json
 Test.txt
-config.json
+config/

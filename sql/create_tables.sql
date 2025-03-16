@@ -2,7 +2,7 @@ CREATE TABLE users (
     id INTEGER AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(64),
     email VARCHAR(128) UNIQUE,
-    password_hash VARCHAR(256)
+    password VARCHAR(256)
 );
 
 CREATE TABLE messages (
