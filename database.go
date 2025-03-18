@@ -75,16 +75,16 @@ func init() {
 }
 
 type User struct {
-	id       int64
-	username string
-	email    string
-	password string
+	Id       int64
+	Username string
+	Email    string
+	Password string
 }
 
 func getUser(id int64) (*User, error) {
 	var user User
 
-	err := DB.QueryRow("SELECT * FROM users WHERE id = ?", id).Scan(&user.id, &user.username, &user.email, &user.password)
+	err := DB.QueryRow("SELECT * FROM users WHERE id = ?", id).Scan(&user.Id, &user.Username, &user.Email, &user.Password)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +102,7 @@ func getUsers(username string) ([]*User, error) {
 
 	var user User
 	for rows.Next() {
-		err := rows.Scan(&user.id, &user.username, &user.email, &user.password)
+		err := rows.Scan(&user.Id, &user.Username, &user.Email, &user.Password)
 		if err != nil {
 			return nil, err
 		}
@@ -120,12 +120,12 @@ func getUsers(username string) ([]*User, error) {
 
 func getUserLogin(email string, password string) (*User, error) {
 	var user User
-	err := DB.QueryRow("SELECT * FROM users WHERE email = ?", email).Scan(&user.id, &user.username, &user.email, &user.password)
+	err := DB.QueryRow("SELECT * FROM users WHERE email = ?", email).Scan(&user.Id, &user.Username, &user.Email, &user.Password)
 	if err != nil {
 		return nil, err
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(user.password), []byte(password))
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +153,7 @@ func NewUser(username string, email string, password string) (*User, error) {
 }
 
 func (u *User) delete() error {
-	_, err := DB.Query("DELETE FROM users WHERE id = ?", u.id)
+	_, err := DB.Query("DELETE FROM users WHERE id = ?", u.Id)
 	if err != nil {
 		return err
 	}
@@ -168,9 +168,9 @@ func (u *User) setUsername(username string) error {
 		return errors.New("username given is empty")
 	}
 
-	u.username = username
+	u.Username = username
 
-	_, err := DB.Exec("UPDATE users SET username = ? WHERE id = ?", username, u.id)
+	_, err := DB.Exec("UPDATE users SET username = ? WHERE id = ?", username, u.Id)
 	if err != nil {
 		return err
 	}
@@ -182,9 +182,9 @@ func (u *User) setEmail(email string) error {
 		return errors.New("email given is empty")
 	}
 
-	u.email = email
+	u.Email = email
 
-	_, err := DB.Exec("UPDATE users SET email = ? WHERE id = ?", email, u.id)
+	_, err := DB.Exec("UPDATE users SET email = ? WHERE id = ?", email, u.Id)
 	if err != nil {
 		return err
 	}
@@ -201,9 +201,9 @@ func (u *User) setPassword(password string) error {
 		return err
 	}
 
-	u.password = string(bytes)
+	u.Password = string(bytes)
 
-	_, err = DB.Exec("UPDATE users SET password = ? WHERE id = ?", bytes, u.id)
+	_, err = DB.Exec("UPDATE users SET password = ? WHERE id = ?", bytes, u.Id)
 	if err != nil {
 		return err
 	}
@@ -211,7 +211,7 @@ func (u *User) setPassword(password string) error {
 }
 
 func (u *User) String() string {
-	return fmt.Sprintf("%d, %s, %s, %s", u.id, u.username, u.email, u.password)
+	return fmt.Sprintf("%d, %s, %s, %s", u.Id, u.Username, u.Email, u.Password)
 }
 
 type Message struct {
@@ -234,7 +234,7 @@ func getMessage(id int64) (*Message, error) {
 }
 
 func NewMessage(sender *User, receiver *User, body string) (*Message, error) {
-	result, err := DB.Exec("INSERT INTO messages(id, send_date, body, sender_id, receiver_id) VALUES(NULL, SYSDATE(), ?, ?, ?)", body, sender.id, receiver.id)
+	result, err := DB.Exec("INSERT INTO messages(id, send_date, body, sender_id, receiver_id) VALUES(NULL, SYSDATE(), ?, ?, ?)", body, sender.Id, receiver.Id)
 	if err != nil {
 		return nil, err
 	}
