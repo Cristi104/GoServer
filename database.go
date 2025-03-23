@@ -215,17 +215,17 @@ func (u *User) String() string {
 }
 
 type Message struct {
-	id         int64
-	sendDate   string
-	body       string
-	senderId   int64
-	receiverId int64
+	Id         int64
+	SendDate   string
+	Body       string
+	SenderId   int64
+	ReceiverId int64
 }
 
 func getMessage(id int64) (*Message, error) {
 	var message Message
 
-	err := DB.QueryRow("SELECT * FROM messages WHERE id = ?", id).Scan(&message.id, &message.sendDate, &message.body, &message.senderId, &message.receiverId)
+	err := DB.QueryRow("SELECT * FROM messages WHERE id = ?", id).Scan(&message.Id, &message.SendDate, &message.Body, &message.SenderId, &message.ReceiverId)
 	if err != nil {
 		return nil, err
 	}
@@ -248,7 +248,7 @@ func NewMessage(sender *User, receiver *User, body string) (*Message, error) {
 }
 
 func (m *Message) delete() error {
-	_, err := DB.Exec("DELETE FROM messages WHERE id = ?", m.id)
+	_, err := DB.Exec("DELETE FROM messages WHERE id = ?", m.Id)
 	if err != nil {
 		return err
 	}

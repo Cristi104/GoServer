@@ -4,9 +4,11 @@ import (
 	"encoding/gob"
 	"errors"
 	"fmt"
+	"html"
 	"log"
 	"net/http"
 	"os"
+	"text/template"
 
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
@@ -45,9 +47,9 @@ func signUpHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == http.MethodPost {
-		username := r.FormValue("username")
-		email := r.FormValue("email")
-		password := r.FormValue("password")
+		username := html.EscapeString(r.FormValue("username"))
+		email := html.EscapeString(r.FormValue("email"))
+		password := html.EscapeString(r.FormValue("password"))
 
 		user, err := NewUser(username, email, password)
 		if err != nil {
@@ -65,13 +67,8 @@ func signUpHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	body, err := os.ReadFile("html/auth/Sign_up.html")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Fprint(w, string(body))
-
+	tmpl := template.Must(template.ParseFiles("html/auth/Sign_up.html"))
+	tmpl.Execute(w, nil)
 }
 
 func signInHandler(w http.ResponseWriter, r *http.Request) {
@@ -83,8 +80,8 @@ func signInHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == http.MethodPost {
-		email := r.FormValue("email")
-		password := r.FormValue("password")
+		email := html.EscapeString(r.FormValue("email"))
+		password := html.EscapeString(r.FormValue("password"))
 
 		user, err := getUserLogin(email, password)
 		if err != nil {
@@ -98,15 +95,23 @@ func signInHandler(w http.ResponseWriter, r *http.Request) {
 			log.Fatal(err)
 		}
 
-		fmt.Fprint(w, user)
+		// fmt.Fprint(w, user)
+		http.Redirect(w, r, "/", http.StatusPermanentRedirect)
 		return
 	}
 
-	body, err := os.ReadFile("html/auth/Sign_in.html")
-	if err != nil {
-		log.Fatal(err)
+	tmpl := template.Must(template.ParseFiles("html/auth/Sign_in.html"))
+	tmpl.Execute(w, nil)
+}
+
+func mainHandler(w http.ResponseWriter, r *http.Request) {
+	session, _ := store.Get(r, "server-auth")
+
+	if session.Values["authenticated"] == true {
+		http.Redirect(w, r, "/home", http.StatusPermanentRedirect)
+		return
 	}
 
-	fmt.Fprint(w, string(body))
-
+	tmpl := template.Must(template.ParseFiles("html/home.html"))
+	tmpl.Execute(w, nil)
 }
