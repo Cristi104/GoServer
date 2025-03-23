@@ -8,12 +8,13 @@ import (
 
 var routes = []route{
 	makeRoute("GET", "/", mainHandler),
-	makeRoute("POST", "/", mainHandler),
-	makeRoute("GET", "/signin/", signInPageHandler),
-	makeRoute("POST", "/signin/", signInHandler),
-	makeRoute("GET", "/signup/", signUpPageHandler),
-	makeRoute("POST", "/signup/", signUpHandler),
-	makeRoute("GET", "/home/", homePageHandler),
+	// makeRoute("POST", "/", mainHandler),
+	makeRoute("GET", "/signin", signInPageHandler),
+	makeRoute("POST", "/signin", signInHandler),
+	makeRoute("GET", "/signup", signUpPageHandler),
+	makeRoute("POST", "/signup", signUpHandler),
+	makeRoute("GET", "/home", homePageHandler),
+	makeRoute("GET", "/data/friends", homePageLoader),
 }
 
 type route struct {

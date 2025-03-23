@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/gob"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"html"
@@ -41,7 +42,7 @@ func init() {
 func signUpPageHandler(w http.ResponseWriter, r *http.Request) {
 	session, _ := store.Get(r, "server-auth")
 
-	if session.Values["authenticated"] == true {
+	if session.Values["authenticated"] != nil && session.Values["authenticated"].(bool) {
 		fmt.Fprint(w, "you are allready authenticated")
 		return
 	}
@@ -53,7 +54,7 @@ func signUpPageHandler(w http.ResponseWriter, r *http.Request) {
 func signUpHandler(w http.ResponseWriter, r *http.Request) {
 	session, _ := store.Get(r, "server-auth")
 
-	if session.Values["authenticated"] == true {
+	if session.Values["authenticated"] != nil && session.Values["authenticated"].(bool) {
 		fmt.Fprint(w, "you are allready authenticated")
 		return
 	}
@@ -80,7 +81,7 @@ func signUpHandler(w http.ResponseWriter, r *http.Request) {
 func signInPageHandler(w http.ResponseWriter, r *http.Request) {
 	session, _ := store.Get(r, "server-auth")
 
-	if session.Values["authenticated"] == true {
+	if session.Values["authenticated"] != nil && session.Values["authenticated"].(bool) {
 		fmt.Fprint(w, "you are allready authenticated")
 		return
 	}
@@ -92,7 +93,7 @@ func signInPageHandler(w http.ResponseWriter, r *http.Request) {
 func signInHandler(w http.ResponseWriter, r *http.Request) {
 	session, _ := store.Get(r, "server-auth")
 
-	if session.Values["authenticated"] == true {
+	if session.Values["authenticated"] != nil && session.Values["authenticated"].(bool) {
 		fmt.Fprint(w, "you are allready authenticated")
 		return
 	}
@@ -112,14 +113,15 @@ func signInHandler(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
+	r.Method = http.MethodGet
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func mainHandler(w http.ResponseWriter, r *http.Request) {
 	session, _ := store.Get(r, "server-auth")
 
-	if session.Values["authenticated"] == true {
-		http.Redirect(w, r, "/home/", http.StatusPermanentRedirect)
+	if session.Values["authenticated"] != nil && session.Values["authenticated"].(bool) {
+		http.Redirect(w, r, "/home", http.StatusSeeOther)
 		return
 	}
 
@@ -130,11 +132,41 @@ func mainHandler(w http.ResponseWriter, r *http.Request) {
 func homePageHandler(w http.ResponseWriter, r *http.Request) {
 	session, _ := store.Get(r, "server-auth")
 
-	if session.Values["authenticated"] == false {
-		http.Redirect(w, r, "/", http.StatusPermanentRedirect)
+	if session.Values["authenticated"] == nil || !session.Values["authenticated"].(bool) {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
 
 	tmpl := template.Must(template.ParseFiles("html/messager/main.html"))
 	tmpl.Execute(w, nil)
+}
+
+func homePageLoader(w http.ResponseWriter, r *http.Request) {
+	session, _ := store.Get(r, "server-auth")
+
+	if session.Values["authenticated"] == nil || !session.Values["authenticated"].(bool) {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	user := session.Values["user"].(User)
+
+	friends, err := getFriends(&user)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var usernames []string
+	for _, friend := range friends {
+		usernames = append(usernames, friend.Username)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	resp, err := json.Marshal(usernames)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Fprint(w, string(resp))
 }

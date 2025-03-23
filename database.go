@@ -152,6 +152,45 @@ func NewUser(username string, email string, password string) (*User, error) {
 	return getUser(id)
 }
 
+func getFriends(user *User) ([]*User, error) {
+	rows, err := DB.Query(`
+	SELECT * 
+	FROM users 
+	WHERE id IN (
+		SELECT 
+			CASE 
+				WHEN receiver_id = ? THEN sender_id 
+				ELSE receiver_id 
+			END 
+		FROM messages 
+		WHERE sender_id = ? 
+		OR receiver_id = ?
+	)`, user.Id, user.Id, user.Id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+	var users []*User
+
+	var tempUser User
+	for rows.Next() {
+		err := rows.Scan(&tempUser.Id, &tempUser.Username, &tempUser.Email, &tempUser.Password)
+		if err != nil {
+			return nil, err
+		}
+		copy := tempUser
+		users = append(users, &copy)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
 func (u *User) delete() error {
 	_, err := DB.Query("DELETE FROM users WHERE id = ?", u.Id)
 	if err != nil {
