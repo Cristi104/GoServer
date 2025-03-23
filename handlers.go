@@ -38,6 +38,18 @@ func init() {
 	store = sessions.NewCookieStore(key)
 }
 
+func signUpPageHandler(w http.ResponseWriter, r *http.Request) {
+	session, _ := store.Get(r, "server-auth")
+
+	if session.Values["authenticated"] == true {
+		fmt.Fprint(w, "you are allready authenticated")
+		return
+	}
+
+	tmpl := template.Must(template.ParseFiles("html/auth/Sign_up.html"))
+	tmpl.Execute(w, nil)
+}
+
 func signUpHandler(w http.ResponseWriter, r *http.Request) {
 	session, _ := store.Get(r, "server-auth")
 
@@ -46,28 +58,34 @@ func signUpHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if r.Method == http.MethodPost {
-		username := html.EscapeString(r.FormValue("username"))
-		email := html.EscapeString(r.FormValue("email"))
-		password := html.EscapeString(r.FormValue("password"))
+	username := html.EscapeString(r.FormValue("username"))
+	email := html.EscapeString(r.FormValue("email"))
+	password := html.EscapeString(r.FormValue("password"))
 
-		user, err := NewUser(username, email, password)
-		if err != nil {
-			log.Fatal(err)
-		}
+	user, err := NewUser(username, email, password)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-		session.Values["authenticated"] = true
-		session.Values["user"] = *user
-		err = session.Save(r, w)
-		if err != nil {
-			log.Fatal(err)
-		}
+	session.Values["authenticated"] = true
+	session.Values["user"] = *user
+	err = session.Save(r, w)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-		fmt.Fprint(w, user)
+	fmt.Fprint(w, user)
+}
+
+func signInPageHandler(w http.ResponseWriter, r *http.Request) {
+	session, _ := store.Get(r, "server-auth")
+
+	if session.Values["authenticated"] == true {
+		fmt.Fprint(w, "you are allready authenticated")
 		return
 	}
 
-	tmpl := template.Must(template.ParseFiles("html/auth/Sign_up.html"))
+	tmpl := template.Must(template.ParseFiles("html/auth/Sign_in.html"))
 	tmpl.Execute(w, nil)
 }
 
@@ -79,39 +97,44 @@ func signInHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if r.Method == http.MethodPost {
-		email := html.EscapeString(r.FormValue("email"))
-		password := html.EscapeString(r.FormValue("password"))
+	email := html.EscapeString(r.FormValue("email"))
+	password := html.EscapeString(r.FormValue("password"))
 
-		user, err := getUserLogin(email, password)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		session.Values["authenticated"] = true
-		session.Values["user"] = *user
-		err = session.Save(r, w)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		// fmt.Fprint(w, user)
-		http.Redirect(w, r, "/", http.StatusPermanentRedirect)
-		return
+	user, err := getUserLogin(email, password)
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	tmpl := template.Must(template.ParseFiles("html/auth/Sign_in.html"))
-	tmpl.Execute(w, nil)
+	session.Values["authenticated"] = true
+	session.Values["user"] = *user
+	err = session.Save(r, w)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func mainHandler(w http.ResponseWriter, r *http.Request) {
 	session, _ := store.Get(r, "server-auth")
 
 	if session.Values["authenticated"] == true {
-		http.Redirect(w, r, "/home", http.StatusPermanentRedirect)
+		http.Redirect(w, r, "/home/", http.StatusPermanentRedirect)
 		return
 	}
 
 	tmpl := template.Must(template.ParseFiles("html/home.html"))
+	tmpl.Execute(w, nil)
+}
+
+func homePageHandler(w http.ResponseWriter, r *http.Request) {
+	session, _ := store.Get(r, "server-auth")
+
+	if session.Values["authenticated"] == false {
+		http.Redirect(w, r, "/", http.StatusPermanentRedirect)
+		return
+	}
+
+	tmpl := template.Must(template.ParseFiles("html/messager/main.html"))
 	tmpl.Execute(w, nil)
 }
