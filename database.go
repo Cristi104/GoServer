@@ -81,10 +81,14 @@ type User struct {
 	Password string
 }
 
-func getUser(id int64) (*User, error) {
+func GetUser(id int64) (*User, error) {
 	var user User
 
-	err := DB.QueryRow("SELECT * FROM users WHERE id = ?", id).Scan(&user.Id, &user.Username, &user.Email, &user.Password)
+	err := DB.QueryRow(`
+		SELECT * 
+		FROM users 
+		WHERE id = ?
+	`, id).Scan(&user.Id, &user.Username, &user.Email, &user.Password)
 	if err != nil {
 		return nil, err
 	}
@@ -92,10 +96,14 @@ func getUser(id int64) (*User, error) {
 	return &user, nil
 }
 
-func getUserUsername(username string) (*User, error) {
+func GetUserUsername(username string) (*User, error) {
 	var user User
-	err := DB.QueryRow("SELECT * FROM users WHERE username = ?", username).Scan(&user.Id, &user.Username, &user.Email, &user.Password)
 
+	err := DB.QueryRow(`
+		SELECT * 
+		FROM users 
+		WHERE username = ?
+	`, username).Scan(&user.Id, &user.Username, &user.Email, &user.Password)
 	if err != nil {
 		return nil, err
 	}
@@ -103,9 +111,14 @@ func getUserUsername(username string) (*User, error) {
 	return &user, nil
 }
 
-func getUserLogin(email string, password string) (*User, error) {
+func GetUserLogin(email string, password string) (*User, error) {
 	var user User
-	err := DB.QueryRow("SELECT * FROM users WHERE email = ?", email).Scan(&user.Id, &user.Username, &user.Email, &user.Password)
+
+	err := DB.QueryRow(`
+		SELECT * 
+		FROM users 
+		WHERE email = ?
+	`, email).Scan(&user.Id, &user.Username, &user.Email, &user.Password)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +137,10 @@ func NewUser(username string, email string, password string) (*User, error) {
 		return nil, err
 	}
 
-	result, err := DB.Exec("INSERT INTO users(id, username, email, password) VALUES(NULL, ?, ?, ?)", username, email, bytes)
+	result, err := DB.Exec(`
+		INSERT INTO users(id, username, email, password) 
+		VALUES(NULL, ?, ?, ?)
+	`, username, email, bytes)
 	if err != nil {
 		return nil, err
 	}
@@ -134,51 +150,14 @@ func NewUser(username string, email string, password string) (*User, error) {
 		return nil, err
 	}
 
-	return getUser(id)
+	return GetUser(id)
 }
 
-func getFriends(user *User) ([]*User, error) {
-	rows, err := DB.Query(`
-	SELECT * 
-	FROM users 
-	WHERE id IN (
-		SELECT 
-			CASE 
-				WHEN receiver_id = ? THEN sender_id 
-				ELSE receiver_id 
-			END 
-		FROM messages 
-		WHERE sender_id = ? 
-		OR receiver_id = ?
-	)`, user.Id, user.Id, user.Id)
-
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-	var users []*User
-
-	var tempUser User
-	for rows.Next() {
-		err := rows.Scan(&tempUser.Id, &tempUser.Username, &tempUser.Email, &tempUser.Password)
-		if err != nil {
-			return nil, err
-		}
-		copy := tempUser
-		users = append(users, &copy)
-	}
-
-	err = rows.Err()
-	if err != nil {
-		return nil, err
-	}
-
-	return users, nil
-}
-
-func (u *User) delete() error {
-	_, err := DB.Query("DELETE FROM users WHERE id = ?", u.Id)
+func (u *User) Delete() error {
+	_, err := DB.Query(`
+		DELETE FROM users 
+		WHERE id = ?
+	`, u.Id)
 	if err != nil {
 		return err
 	}
@@ -188,35 +167,43 @@ func (u *User) delete() error {
 	return nil
 }
 
-func (u *User) setUsername(username string) error {
+func (u *User) SetUsername(username string) error {
 	if len(username) == 0 {
 		return errors.New("username given is empty")
 	}
 
 	u.Username = username
 
-	_, err := DB.Exec("UPDATE users SET username = ? WHERE id = ?", username, u.Id)
+	_, err := DB.Exec(`
+		UPDATE users 
+		SET username = ? 
+		WHERE id = ?
+	`, username, u.Id)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (u *User) setEmail(email string) error {
+func (u *User) SetEmail(email string) error {
 	if len(email) == 0 {
 		return errors.New("email given is empty")
 	}
 
 	u.Email = email
 
-	_, err := DB.Exec("UPDATE users SET email = ? WHERE id = ?", email, u.Id)
+	_, err := DB.Exec(`
+		UPDATE users 
+		SET email = ? 
+		WHERE id = ?
+	`, email, u.Id)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (u *User) setPassword(password string) error {
+func (u *User) SetPassword(password string) error {
 	if len(password) == 0 {
 		return errors.New("password given is empty")
 	}
@@ -228,7 +215,11 @@ func (u *User) setPassword(password string) error {
 
 	u.Password = string(bytes)
 
-	_, err = DB.Exec("UPDATE users SET password = ? WHERE id = ?", bytes, u.Id)
+	_, err = DB.Exec(`
+		UPDATE users 
+		SET password = ? 
+		WHERE id = ?
+	`, bytes, u.Id)
 	if err != nil {
 		return err
 	}
@@ -239,27 +230,62 @@ func (u *User) String() string {
 	return fmt.Sprintf("%d, %s, %s, %s", u.Id, u.Username, u.Email, u.Password)
 }
 
-type Message struct {
-	Id         int64
-	SendDate   string
-	Body       string
-	SenderId   int64
-	ReceiverId int64
+type ConversationMember struct {
+	User
 }
 
-func getMessage(id int64) (*Message, error) {
-	var message Message
+type Conversation struct {
+	Id         int64
+	Name       string
+	CreateDate string
+	Members    []*ConversationMember
+}
 
-	err := DB.QueryRow("SELECT * FROM messages WHERE id = ?", id).Scan(&message.Id, &message.SendDate, &message.Body, &message.SenderId, &message.ReceiverId)
+func GetConversation(id int64) (*Conversation, error) {
+	var conversation Conversation
+
+	// get conversation details
+	err := DB.QueryRow(`
+		SELECT * 
+		FROM conversations
+		WHERE id = ?
+	`, id).Scan(&conversation.Id, &conversation.Name, &conversation.CreateDate)
 	if err != nil {
 		return nil, err
 	}
 
-	return &message, nil
+	// get all users in the conversation
+	rows, err := DB.Query(`
+		SELECT u.*
+		FROM in_conversation ic
+		LEFT JOIN users u ON u.id = ic.user_id
+		WHERE ic.conversation_id = ?
+	`, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var member ConversationMember
+	for rows.Next() {
+		err := rows.Scan(&member.Id, &member.Username, &member.Email, &member.Password)
+		if err != nil {
+			return nil, err
+		}
+
+		copy := member
+		conversation.Members = append(conversation.Members, &copy)
+	}
+
+	return &conversation, nil
 }
 
-func NewMessage(sender *User, receiver *User, body string) (*Message, error) {
-	result, err := DB.Exec("INSERT INTO messages(id, send_date, body, sender_id, receiver_id) VALUES(NULL, SYSDATE(), ?, ?, ?)", body, sender.Id, receiver.Id)
+func NewConversation(creator *User, name string) (*Conversation, error) {
+	// create conversation
+	result, err := DB.Exec(`
+		INSERT INTO conversations(id, name, create_date)
+		VALUES(NULL, ?, SYSDATE())
+	`)
 	if err != nil {
 		return nil, err
 	}
@@ -269,45 +295,99 @@ func NewMessage(sender *User, receiver *User, body string) (*Message, error) {
 		return nil, err
 	}
 
-	return getMessage(id)
-}
-
-func getConversation(user *User, other *User) ([]*Message, error) {
-	rows, err := DB.Query(`
-	SELECT * 
-	FROM messages
-	WHERE (receiver_id = ? AND sender_id = ?)
-	OR (sender_id = ? AND receiver_id = ?)
-	`, user.Id, other.Id, user.Id, other.Id)
-
+	// add creator to conversation
+	result, err = DB.Exec(`
+		INSERT INTO in_conversation(user_id, conversationd_id)
+		VALUES(?, ?)
+	`, creator.Id, id)
 	if err != nil {
 		return nil, err
 	}
 
-	defer rows.Close()
-	var messages []*Message
+	id, err = result.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
 
-	var message Message
+	return GetConversation(id)
+}
+
+func GetUserConversations(user *User) ([]*Conversation, error) {
+	rows, err := DB.Query(`
+		SELECT conversation_id
+		FROM in_conversation
+		WHERE user_id = ?
+	`, user.Id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var conversations []*Conversation
+	var id int64
+
 	for rows.Next() {
-		err := rows.Scan(&message.Id, &message.SendDate, &message.Body, &message.SenderId, &message.ReceiverId)
+		err = rows.Scan(&id)
 		if err != nil {
 			return nil, err
 		}
 
-		copy := message
-		messages = append(messages, &copy)
+		conversation, err := GetConversation(id)
+		if err != nil {
+			return nil, err
+		}
+
+		conversations = append(conversations, conversation)
 	}
 
-	err = rows.Err()
+	return conversations, nil
+}
+
+type Message struct {
+	Id              int64
+	SendDate        string
+	Body            string
+	SenderId        int64
+	conversation_id int64
+}
+
+func GetMessage(id int64) (*Message, error) {
+	var message Message
+
+	err := DB.QueryRow(`
+		SELECT * 
+		FROM messages 
+		WHERE id = ?
+	`, id).Scan(&message.Id, &message.SendDate, &message.Body, &message.SenderId, &message.conversation_id)
 	if err != nil {
 		return nil, err
 	}
 
-	return messages, nil
+	return &message, nil
 }
 
-func (m *Message) delete() error {
-	_, err := DB.Exec("DELETE FROM messages WHERE id = ?", m.Id)
+func NewMessage(sender *User, conversation *Conversation, body string) (*Message, error) {
+	result, err := DB.Exec(`
+		INSERT INTO messages(id, send_date, body, sender_id, conversation_id) 
+		VALUES(NULL, SYSDATE(), ?, ?, ?)
+	`, body, sender.Id, conversation.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+
+	return GetMessage(id)
+}
+
+func (m *Message) Delete() error {
+	_, err := DB.Exec(`
+		DELETE FROM messages 
+		WHERE id = ?
+	`, m.Id)
 	if err != nil {
 		return err
 	}
