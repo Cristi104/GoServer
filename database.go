@@ -92,30 +92,15 @@ func getUser(id int64) (*User, error) {
 	return &user, nil
 }
 
-func getUsers(username string) ([]*User, error) {
-	rows, err := DB.Query("SELECT * FROM users WHERE username = ?", username)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var users []*User
-
+func getUserUsername(username string) (*User, error) {
 	var user User
-	for rows.Next() {
-		err := rows.Scan(&user.Id, &user.Username, &user.Email, &user.Password)
-		if err != nil {
-			return nil, err
-		}
-		copy := user
-		users = append(users, &copy)
-	}
+	err := DB.QueryRow("SELECT * FROM users WHERE username = ?", username).Scan(&user.Id, &user.Username, &user.Email, &user.Password)
 
-	err = rows.Err()
 	if err != nil {
 		return nil, err
 	}
 
-	return users, nil
+	return &user, nil
 }
 
 func getUserLogin(email string, password string) (*User, error) {
@@ -191,6 +176,7 @@ func getFriends(user *User) ([]*User, error) {
 
 	return users, nil
 }
+
 func (u *User) delete() error {
 	_, err := DB.Query("DELETE FROM users WHERE id = ?", u.Id)
 	if err != nil {
@@ -284,6 +270,40 @@ func NewMessage(sender *User, receiver *User, body string) (*Message, error) {
 	}
 
 	return getMessage(id)
+}
+
+func getConversation(user *User, other *User) ([]*Message, error) {
+	rows, err := DB.Query(`
+	SELECT * 
+	FROM messages
+	WHERE (receiver_id = ? AND sender_id = ?)
+	OR (sender_id = ? AND receiver_id = ?)
+	`, user.Id, other.Id, user.Id, other.Id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+	var messages []*Message
+
+	var message Message
+	for rows.Next() {
+		err := rows.Scan(&message.Id, &message.SendDate, &message.Body, &message.SenderId, &message.ReceiverId)
+		if err != nil {
+			return nil, err
+		}
+
+		copy := message
+		messages = append(messages, &copy)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+
+	return messages, nil
 }
 
 func (m *Message) delete() error {

@@ -25,20 +25,17 @@ func TestUsers(t *testing.T) {
 	}
 	t.Log(user)
 
-	users, err := getUsers("testUsername2")
+	user, err = getUserUsername("testUsername2")
 	if err != nil {
 		t.Error(err)
 	}
+	t.Log(user)
 
 	user, err = getUserLogin("testEmail2", "testPassword2")
 	if err != nil {
 		t.Error(err)
 	}
 	t.Log(user)
-
-	for i, v := range users {
-		t.Logf("index: %d, %s \n", i, v)
-	}
 
 	err = user.delete()
 	if err != nil {

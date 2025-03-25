@@ -161,12 +161,40 @@ func homePageLoader(w http.ResponseWriter, r *http.Request) {
 		usernames = append(usernames, friend.Username)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-
 	resp, err := json.Marshal(usernames)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	fmt.Fprint(w, string(resp))
+}
+
+func conversationLoader(w http.ResponseWriter, r *http.Request) {
+	session, _ := store.Get(r, "server-auth")
+
+	if session.Values["authenticated"] == nil || !session.Values["authenticated"].(bool) {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	user := session.Values["user"].(User)
+
+	username := html.EscapeString(r.FormValue("id"))
+	friend, err := getUserUsername(username)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	messages, err := getConversation(&user, friend)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	resp, err := json.Marshal(messages)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Print(string(resp))
 	fmt.Fprint(w, string(resp))
 }

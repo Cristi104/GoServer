@@ -15,6 +15,7 @@ var routes = []route{
 	makeRoute("POST", "/signup", signUpHandler),
 	makeRoute("GET", "/home", homePageHandler),
 	makeRoute("GET", "/data/friends", homePageLoader),
+	makeRoute("GET", "/data/conversation", conversationLoader),
 }
 
 type route struct {
