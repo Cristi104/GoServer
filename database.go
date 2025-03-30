@@ -343,6 +343,22 @@ func GetUserConversations(user *User) ([]*Conversation, error) {
 	return conversations, nil
 }
 
+func UserInConversation(userId int64, conversationId int64) bool {
+	var result int64
+	err := DB.QueryRow(`
+		SELECT COUNT(*)
+		FROM in_conversation
+		WHERE user_id = ?
+		AND conversation_id = ?
+	`, userId, conversationId).Scan(&result)
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+
+	return result != 0
+}
+
 type Message struct {
 	Id              int64
 	SendDate        string
@@ -366,11 +382,11 @@ func GetMessage(id int64) (*Message, error) {
 	return &message, nil
 }
 
-func NewMessage(sender *User, conversation *Conversation, body string) (*Message, error) {
+func NewMessage(senderId int64, conversation *Conversation, body string) (*Message, error) {
 	result, err := DB.Exec(`
 		INSERT INTO messages(id, send_date, body, sender_id, conversation_id) 
 		VALUES(NULL, SYSDATE(), ?, ?, ?)
-	`, body, sender.Id, conversation.Id)
+	`, body, senderId, conversation.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -381,6 +397,33 @@ func NewMessage(sender *User, conversation *Conversation, body string) (*Message
 	}
 
 	return GetMessage(id)
+}
+
+func GetConversationMessages(conversationId int64) ([]*Message, error) {
+	rows, err := DB.Query(`
+		SELECT *
+		FROM messages
+		WHERE conversation_id = ?
+		ORDER BY send_date DESC	
+	`, conversationId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var messages []*Message
+	var message Message
+
+	for rows.Next() {
+		err = rows.Scan(&message.Id, &message.SendDate, &message.Body, &message.SenderId, &message.conversation_id)
+		if err != nil {
+			return nil, err
+		}
+
+		messages = append(messages, &message)
+	}
+
+	return messages, nil
 }
 
 func (m *Message) Delete() error {

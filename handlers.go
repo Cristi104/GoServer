@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"text/template"
 
 	"github.com/gorilla/securecookie"
@@ -39,7 +40,7 @@ func init() {
 	store = sessions.NewCookieStore(key)
 }
 
-func signUpPageHandler(w http.ResponseWriter, r *http.Request) {
+func SignUpPostHandler(w http.ResponseWriter, r *http.Request) {
 	session, _ := store.Get(r, "server-auth")
 
 	if session.Values["authenticated"] != nil && session.Values["authenticated"].(bool) {
@@ -51,11 +52,12 @@ func signUpPageHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, nil)
 }
 
-func signUpHandler(w http.ResponseWriter, r *http.Request) {
+func SignUpGetHandler(w http.ResponseWriter, r *http.Request) {
 	session, _ := store.Get(r, "server-auth")
 
 	if session.Values["authenticated"] != nil && session.Values["authenticated"].(bool) {
-		fmt.Fprint(w, "you are allready authenticated")
+		r.Method = http.MethodGet
+		http.Redirect(w, r, "/home", http.StatusSeeOther)
 		return
 	}
 
@@ -78,7 +80,7 @@ func signUpHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, user)
 }
 
-func signInPageHandler(w http.ResponseWriter, r *http.Request) {
+func SignInPostHandler(w http.ResponseWriter, r *http.Request) {
 	session, _ := store.Get(r, "server-auth")
 
 	if session.Values["authenticated"] != nil && session.Values["authenticated"].(bool) {
@@ -90,18 +92,19 @@ func signInPageHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, nil)
 }
 
-func signInHandler(w http.ResponseWriter, r *http.Request) {
+func SignInGetHandler(w http.ResponseWriter, r *http.Request) {
 	session, _ := store.Get(r, "server-auth")
 
 	if session.Values["authenticated"] != nil && session.Values["authenticated"].(bool) {
-		fmt.Fprint(w, "you are allready authenticated")
+		r.Method = http.MethodGet
+		http.Redirect(w, r, "/home", http.StatusSeeOther)
 		return
 	}
 
 	email := html.EscapeString(r.FormValue("email"))
 	password := html.EscapeString(r.FormValue("password"))
 
-	user, err := getUserLogin(email, password)
+	user, err := GetUserLogin(email, password)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -117,7 +120,7 @@ func signInHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-func mainHandler(w http.ResponseWriter, r *http.Request) {
+func MainGetHandler(w http.ResponseWriter, r *http.Request) {
 	session, _ := store.Get(r, "server-auth")
 
 	if session.Values["authenticated"] != nil && session.Values["authenticated"].(bool) {
@@ -129,7 +132,7 @@ func mainHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, nil)
 }
 
-func homePageHandler(w http.ResponseWriter, r *http.Request) {
+func HomeGetHandler(w http.ResponseWriter, r *http.Request) {
 	session, _ := store.Get(r, "server-auth")
 
 	if session.Values["authenticated"] == nil || !session.Values["authenticated"].(bool) {
@@ -137,11 +140,11 @@ func homePageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tmpl := template.Must(template.ParseFiles("html/messager/main.html"))
+	tmpl := template.Must(template.ParseFiles("html/messager/home.html"))
 	tmpl.Execute(w, nil)
 }
 
-func homePageLoader(w http.ResponseWriter, r *http.Request) {
+func DataConversationsGetHandler(w http.ResponseWriter, r *http.Request) {
 	session, _ := store.Get(r, "server-auth")
 
 	if session.Values["authenticated"] == nil || !session.Values["authenticated"].(bool) {
@@ -151,25 +154,28 @@ func homePageLoader(w http.ResponseWriter, r *http.Request) {
 
 	user := session.Values["user"].(User)
 
-	friends, err := getFriends(&user)
+	conversations, err := GetUserConversations(&user)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	var usernames []string
-	for _, friend := range friends {
-		usernames = append(usernames, friend.Username)
+	for _, conv := range conversations {
+		for _, member := range conv.Members {
+			member.Email = ""
+			member.Password = ""
+		}
 	}
 
-	resp, err := json.Marshal(usernames)
+	resp, err := json.Marshal(conversations)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	fmt.Println(string(resp))
 	fmt.Fprint(w, string(resp))
 }
 
-func conversationLoader(w http.ResponseWriter, r *http.Request) {
+func DataMessagesGetHandler(w http.ResponseWriter, r *http.Request) {
 	session, _ := store.Get(r, "server-auth")
 
 	if session.Values["authenticated"] == nil || !session.Values["authenticated"].(bool) {
@@ -178,14 +184,16 @@ func conversationLoader(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := session.Values["user"].(User)
-
-	username := html.EscapeString(r.FormValue("id"))
-	friend, err := getUserUsername(username)
+	conversationId, err := strconv.Atoi(html.EscapeString(r.FormValue("id")))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	messages, err := getConversation(&user, friend)
+	if !UserInConversation(user.Id, int64(conversationId)) {
+		return
+	}
+
+	messages, err := GetConversationMessages(int64(conversationId))
 	if err != nil {
 		log.Fatal(err)
 	}

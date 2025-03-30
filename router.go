@@ -7,15 +7,14 @@ import (
 )
 
 var routes = []route{
-	makeRoute("GET", "/", mainHandler),
-	// makeRoute("POST", "/", mainHandler),
-	makeRoute("GET", "/signin", signInPageHandler),
-	makeRoute("POST", "/signin", signInHandler),
-	makeRoute("GET", "/signup", signUpPageHandler),
-	makeRoute("POST", "/signup", signUpHandler),
-	makeRoute("GET", "/home", homePageHandler),
-	makeRoute("GET", "/data/friends", homePageLoader),
-	makeRoute("GET", "/data/conversation", conversationLoader),
+	makeRoute("GET", "/", MainGetHandler),
+	makeRoute("GET", "/signin", SignInPostHandler),
+	makeRoute("POST", "/signin", SignInGetHandler),
+	makeRoute("GET", "/signup", SignUpPostHandler),
+	makeRoute("POST", "/signup", SignUpGetHandler),
+	makeRoute("GET", "/home", HomeGetHandler),
+	makeRoute("GET", "/data/conversations", DataConversationsGetHandler),
+	makeRoute("GET", "/data/messages", DataMessagesGetHandler),
 }
 
 type route struct {
