@@ -1,49 +1,57 @@
 window.onload = function(){
     let sidebar = document.getElementById("sidebar");
-    fetch("/data/friends", {
+    fetch("/data/conversations", {
         method: "GET",
     })
     .then(response => response.json()) 
-    .then(data => {
+    .then(conversations => {
         let main = document.getElementById("main");
-        data.forEach(element => {
-            sidebar.innerHTML += "<button class=\"conversation\" id=\"" + element + "\">" + element + "</button>";
-            let button = document.getElementById(element)
+        conversations.forEach(conversation => {
+
+            console.log(conversation)
+
+            let button = document.createElement("button")
+            button.classList += "conversation"
+            button.id = conversation.Id
+            button.innerHTML = conversation.Name
+
             button.addEventListener("click", function(event) {
                 event.stopPropagation();
-                fetch("/data/conversation?id=" + button.id, {
+
+                main.innerHTML = ""
+
+                fetch("/data/messages?id=" + button.id, {
                     method: "GET"
                 })
                 .then(response => response.json())
-                .then(data => {
-                    main.innerHTML = ""
-                    console.log(data)
-                    data.forEach(dataElement => {
-                        main.innerHTML += "<p>" + JSON.stringify(dataElement) + "</p>"
+                .then(messages => {
+                    console.log(messages)
+                    messages.forEach(Message => {
+                        let message = document.createElement("div")
+                        message.classList += "message"
+
+                        let name = document.createElement("h3")
+                        name.innerHTML = conversation.Members.find((e) => e.Id == Message.SenderId).Username
+                        name.classList += "username"
+                        message.append(name)
+
+                        let messageBody = document.createElement("p")
+                        messageBody.innerHTML = Message.Body
+                        messageBody.classList += "messageBody"
+                        message.append(messageBody)
+
+                        let date = document.createElement("p")
+                        date.innerHTML = Message.SendDate
+                        date.classList += "date"
+                        message.append(date)
+
+                        main.append(message)
                     })
                 })
             })
+            sidebar.append(button)
             
         });
     })
     .catch(error => console.error('Error:', error));
-
-    // let conversations = document.querySelectorAll(".conversation");
-    // let main = document.getElementById("main");
-    // console.log(conversations)
-    // conversations.forEach(element => {
-    //     element.addEventListener("click", function(event) {
-    //         event.stopPropagation();
-    //         fetch("/data/conversation?id=" + element.id, {
-    //             method: "GET"
-    //         })
-    //         .then(response => response.json())
-    //         .then(data => {
-    //             main.innerHTML = ""
-    //             data.forEach(dataElement => {
-    //                 main.innerHTML += "<p>" + dataElement + "</p>"
-    //             })
-    //         })
-    //     })
-    // })
 }
