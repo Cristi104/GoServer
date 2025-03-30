@@ -120,7 +120,7 @@ func SignInGetHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-func MainGetHandler(w http.ResponseWriter, r *http.Request) {
+func MainHandler(w http.ResponseWriter, r *http.Request) {
 	session, _ := store.Get(r, "server-auth")
 
 	if session.Values["authenticated"] != nil && session.Values["authenticated"].(bool) {
@@ -132,7 +132,7 @@ func MainGetHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, nil)
 }
 
-func HomeGetHandler(w http.ResponseWriter, r *http.Request) {
+func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	session, _ := store.Get(r, "server-auth")
 
 	if session.Values["authenticated"] == nil || !session.Values["authenticated"].(bool) {
@@ -171,11 +171,10 @@ func DataConversationsGetHandler(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	fmt.Println(string(resp))
 	fmt.Fprint(w, string(resp))
 }
 
-func DataMessagesGetHandler(w http.ResponseWriter, r *http.Request) {
+func DataMessagesLoadHandler(w http.ResponseWriter, r *http.Request) {
 	session, _ := store.Get(r, "server-auth")
 
 	if session.Values["authenticated"] == nil || !session.Values["authenticated"].(bool) {
@@ -184,7 +183,7 @@ func DataMessagesGetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := session.Values["user"].(User)
-	conversationId, err := strconv.Atoi(html.EscapeString(r.FormValue("id")))
+	conversationId, err := strconv.Atoi(html.EscapeString(r.FormValue("ConversationId")))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -203,6 +202,41 @@ func DataMessagesGetHandler(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	fmt.Print(string(resp))
+	fmt.Fprint(w, string(resp))
+}
+
+func DataMessagesAddHandler(w http.ResponseWriter, r *http.Request) {
+	session, _ := store.Get(r, "server-auth")
+
+	if session.Values["authenticated"] == nil || !session.Values["authenticated"].(bool) {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	user := session.Values["user"].(User)
+	conversationId, err := strconv.Atoi(html.EscapeString(r.FormValue("ConversationId")))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if !UserInConversation(user.Id, int64(conversationId)) {
+		return
+	}
+
+	body := html.EscapeString(r.FormValue("message"))
+
+	message, err := NewMessage(user.Id, int64(conversationId), body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var messages []*Message
+	messages = append(messages, message)
+
+	resp, err := json.Marshal(messages)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	fmt.Fprint(w, string(resp))
 }

@@ -360,11 +360,11 @@ func UserInConversation(userId int64, conversationId int64) bool {
 }
 
 type Message struct {
-	Id              int64
-	SendDate        string
-	Body            string
-	SenderId        int64
-	conversation_id int64
+	Id             int64
+	SendDate       string
+	Body           string
+	SenderId       int64
+	ConversationId int64
 }
 
 func GetMessage(id int64) (*Message, error) {
@@ -374,7 +374,7 @@ func GetMessage(id int64) (*Message, error) {
 		SELECT * 
 		FROM messages 
 		WHERE id = ?
-	`, id).Scan(&message.Id, &message.SendDate, &message.Body, &message.SenderId, &message.conversation_id)
+	`, id).Scan(&message.Id, &message.SendDate, &message.Body, &message.SenderId, &message.ConversationId)
 	if err != nil {
 		return nil, err
 	}
@@ -382,11 +382,11 @@ func GetMessage(id int64) (*Message, error) {
 	return &message, nil
 }
 
-func NewMessage(senderId int64, conversation *Conversation, body string) (*Message, error) {
+func NewMessage(senderId int64, conversationId int64, body string) (*Message, error) {
 	result, err := DB.Exec(`
 		INSERT INTO messages(id, send_date, body, sender_id, conversation_id) 
 		VALUES(NULL, SYSDATE(), ?, ?, ?)
-	`, body, senderId, conversation.Id)
+	`, body, senderId, conversationId)
 	if err != nil {
 		return nil, err
 	}
@@ -404,7 +404,7 @@ func GetConversationMessages(conversationId int64) ([]*Message, error) {
 		SELECT *
 		FROM messages
 		WHERE conversation_id = ?
-		ORDER BY send_date DESC	
+		ORDER BY send_date
 	`, conversationId)
 	if err != nil {
 		return nil, err
@@ -415,12 +415,13 @@ func GetConversationMessages(conversationId int64) ([]*Message, error) {
 	var message Message
 
 	for rows.Next() {
-		err = rows.Scan(&message.Id, &message.SendDate, &message.Body, &message.SenderId, &message.conversation_id)
+		err = rows.Scan(&message.Id, &message.SendDate, &message.Body, &message.SenderId, &message.ConversationId)
 		if err != nil {
 			return nil, err
 		}
 
-		messages = append(messages, &message)
+		copy := message
+		messages = append(messages, &copy)
 	}
 
 	return messages, nil
