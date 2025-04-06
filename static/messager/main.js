@@ -1,4 +1,5 @@
 window.onload = function(){
+    loadAccountData()
     fetch("/data/conversations", {
         method: "GET",
     })
@@ -11,12 +12,24 @@ window.onload = function(){
     .catch(error => console.error('Error:', error));
 }
 
+function loadAccountData(){
+    fetch("/data/account", {
+        method: "GET",
+    })
+    .then(response => response.json())
+    .then(accountData => {
+        localStorage.setItem("account", JSON.stringify(accountData))
+        console.log(accountData)
+    })
+    .catch(error => console.error('Error:', error));
+}
+
 function addConversation(conversation){
-    let main = document.getElementById("main");
+    let main = document.getElementById("messages");
     let sidebar = document.getElementById("sidebar");
 
     let button = document.createElement("button")
-    button.classList += "conversation"
+    button.classList.add("conversation")
     button.id = conversation.Id
     button.innerHTML = conversation.Name
 
@@ -43,50 +56,60 @@ function addConversation(conversation){
 }
 
 function addMessage(username, Message){
-    let main = document.getElementById("main")
+    let main = document.getElementById("messages")
     let message = document.createElement("div")
-    message.classList += "message"
+    let account = JSON.parse(localStorage.getItem("account"))
+    console.log(account.Id)
+    console.log(Message.SenderId)
+    if(Message.SenderId == account.Id)
+        message.classList.add("userMessage")
+    message.classList.add("message")
 
     let name = document.createElement("h3")
-    name.innerHTML = username //conversation.Members.find((e) => e.Id == Message.SenderId).Username
-    name.classList += "username"
+    name.innerHTML = username
+    name.classList.add("username")
     message.append(name)
 
     let messageBody = document.createElement("p")
     messageBody.innerHTML = Message.Body
-    messageBody.classList += "messageBody"
+    messageBody.classList.add("messageBod")
     message.append(messageBody)
 
     let date = document.createElement("p")
     date.innerHTML = Message.SendDate
-    date.classList += "date"
+    date.classList.add("date")
     message.append(date)
 
-    main.insertBefore(message, main.lastChild)
+    main.append(message)
 }
 
 function createMessageForm(conversation){
-    let main = document.getElementById("main")
-    let messageForm = document.createElement("form")
-    messageForm.id = "messageForm"
-    messageForm.action = "/data/messages"
-    messageForm.method = "POST"
+    // let main = document.getElementById("content")
+    // let messageForm = document.createElement("form")
+    // messageForm.id = "messageForm"
+    // messageForm.action = "/data/messages"
+    // messageForm.method = "POST"
 
-    let messageInput = document.createElement("input")
-    messageInput.type = "text"
-    messageInput.id = "message"
-    messageInput.name = "message"
-    messageInput.required = true
-    messageForm.appendChild(messageInput)
+    // let messageInput = document.createElement("input")
+    // messageInput.type = "text"
+    // messageInput.id = "message"
+    // messageInput.name = "message"
+    // messageInput.autocomplete = "off"
+    // messageInput.required = true
+    // messageForm.appendChild(messageInput)
 
-    let messageSubmit = document.createElement("input")
-    messageSubmit.type = "submit"
-    messageForm.appendChild(messageSubmit)
+    // let messageSubmit = document.createElement("input")
+    // messageSubmit.type = "submit"
+    // messageSubmit.value = "send"
+    // messageForm.appendChild(messageSubmit)
 
+    let messageForm = document.getElementById("messageForm")
     messageForm.addEventListener("submit", function(event){
         event.preventDefault()
         let data = new FormData(messageForm)
         data.append("ConversationId", conversation.Id)
+        let messageInput = document.getElementById("message")
+        messageInput.value = ""
         fetch("/data/messages/add", {
             method: "POST",
             body: data,
@@ -100,6 +123,5 @@ function createMessageForm(conversation){
         .catch(error => console.error('Error:', error));
     })
 
-    main.append(messageForm)
-
+    // main.append(messageForm)
 }

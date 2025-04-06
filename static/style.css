@@ -2,20 +2,72 @@
 html{
     font-family: Calibri;
     font-size: large;
-    background-color: aqua;
+    background-color: rgb(32, 32, 48);
+    color: rgb(199, 203, 255);
+}
+
+header h1{
+    margin: auto;
+    text-align: center;
+    color: royalblue;
+}
+
+button{
+    text-decoration: none;
+    color: white;
+    padding: 0.7rem;
+    background-color: rgb(54, 54, 65);
+    border-radius: 1.8rem;
+    border-color: royalblue;
+    border-style: solid;
+    transition: all 0.5s;
+}
+
+a{
+    text-decoration: none;
+    color: white;
+}
+html, body{
+    height: 100%;
+    margin: 0;
+}
+#main{
+    border-radius: 2rem;
+    padding: 1rem;
+    border-color: royalblue;
+    border-style: solid;
+    background-color: rgb(60, 60, 70);
+    margin: 1rem auto;
+    width: 50%;
 }
 
 .container{
+    height: calc(100% - 42px);
     display: grid;
+    grid-template-areas: 'side mess' 'side form';
     grid-template-columns: 1fr 7fr;
+    grid-template-rows: auto min-content;
 }
 
 #sidebar{
-    background-color: blueviolet;
+    margin: 0.3rem;
+    border-radius: 1rem;
+    padding: 0.3rem;
+    border-color: royalblue;
+    border-style: solid;
+    grid-area: side;
+    background-color: rgb(60, 60, 70);
 }
 
-#main{
-    background-color: blue;
+#messages{
+    margin: 0.3rem;
+    border-radius: 1rem;
+    padding: 0.3rem;
+    border-color: royalblue;
+    border-style: solid;
+    grid-area: mess;
+    background-color: rgb(60, 60, 70);
+    overflow-y: auto;
 }
 
 .conversation{
@@ -35,6 +87,10 @@ html{
     width: max-content;
 }
 
+.userMessage{
+    margin-left: auto;
+}
+
 .username{
     margin: 8px 8px 0;
 }
@@ -45,4 +101,29 @@ html{
 
 .date{
     margin: 8px 8px 5px;
+}
+
+#messageForm{
+    grid-area: form;
+    height: min-content;
+    margin: 0.3rem;
+}
+
+#messageForm input[type=text]{
+    width: calc(100% - 0.6rem - 4px - 60px);
+    border-radius: 1rem;
+    padding: 0.3rem;
+    border-color: royalblue;
+    border-style: solid;
+    background-color: rgb(32, 32, 48);
+    color: rgb(199, 203, 255);
+}
+
+#messageForm input[type=submit]{
+    border-radius: 1rem;
+    padding: 0.3rem;
+    border-color: royalblue;
+    border-style: solid;
+    background-color: rgb(32, 32, 48);
+    color: rgb(199, 203, 255);
 }
