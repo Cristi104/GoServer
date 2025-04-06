@@ -16,6 +16,7 @@ var routes = []route{
 	makeRoute("GET", "/data/conversations", DataConversationsGetHandler),
 	makeRoute("POST", "/data/messages/load", DataMessagesLoadHandler),
 	makeRoute("POST", "/data/messages/add", DataMessagesAddHandler),
+	makeRoute("GET", "/data/account", DataAccountHandler),
 }
 
 type route struct {

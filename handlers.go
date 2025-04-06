@@ -240,3 +240,22 @@ func DataMessagesAddHandler(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprint(w, string(resp))
 }
+
+func DataAccountHandler(w http.ResponseWriter, r *http.Request) {
+	session, _ := store.Get(r, "server-auth")
+
+	if session.Values["authenticated"] == nil || !session.Values["authenticated"].(bool) {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	user := session.Values["user"].(User)
+	user.Password = ""
+
+	resp, err := json.Marshal(user)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Fprint(w, string(resp))
+}
