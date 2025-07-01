@@ -1,0 +1,32 @@
+services:
+  db:
+    image: postgres
+    ports:
+      - 5432:5432
+    networks:
+      db_con:
+        ipv4_address: 198.7.0.2
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root_pass
+      POSTGRES_DB: GoServer
+
+  server:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    ports:
+      - 8080:8080
+    networks:
+      db_con:
+        ipv4_address: 198.7.0.3
+
+networks:
+  db_con:
+    ipam:
+      driver: default
+      config:
+        - subnet: 198.7.0.0/24
+          gateway: 198.7.0.1
+
+
