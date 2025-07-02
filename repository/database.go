@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 )
 
-var Database_connection *sql.DB
+var DatabaseConnection *sql.DB
 
 type config struct {
 	Host   string
@@ -60,10 +60,10 @@ func init() {
 			"sslmode=disable",
 		temp.Host, temp.Port, temp.User, temp.Passwd, temp.DBName)
 
-	Database_connection, err = sql.Open("postgres", data_string)
+	DatabaseConnection, err = sql.Open("postgres", data_string)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("Connected to database: %s at %s,%d\n", temp.DBName, temp.Host, temp.Port)
+	fmt.Printf("Connected to database: %s at %s:%d\n", temp.DBName, temp.Host, temp.Port)
 }
