@@ -166,3 +166,108 @@ func TestConversation(t *testing.T) {
 		t.Fatal("expected user3 to be only in conversation1")
 	}
 }
+
+func TestMessage(t *testing.T)  {
+	// creating 2 users
+	// user 1
+	user1, err := repository.InsertUser("test_username1", "test1@email.com", "test_pass1")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer func() {
+		err = user1.Delete()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	// user 2
+	user2, err := repository.InsertUser("test_username2", "test2@email.com", "test_pass2")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer func() {
+		err = user2.Delete()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	// create a conversation
+	conv, err := repository.InsertConversation("conversation1")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer func() {
+		err = conv.Delete()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	// add users to conversation
+	err = conv.AddUsers([]string{user1.Id(), user2.Id()})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// send 2 messages
+	message1, err := repository.InsertMessage("test message from user 1", user1.Id(), conv.Id())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer func() {
+		err = message1.Delete()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	message2, err := repository.InsertMessage("test message from user 2", user2.Id(), conv.Id())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer func() {
+		err = message2.Delete()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	message2.SetBody("i have edited this message")
+	err = message2.Update()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	messages, err := repository.SelectMessagesByConversation(conv.Id())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !slices.ContainsFunc(messages, func(m repository.Message) bool {
+		return m.Id() == message1.Id()
+	}) {
+		t.Fatal("message 1 not in conversation")
+	}
+	if !slices.ContainsFunc(messages, func(m repository.Message) bool {
+		return m.Id() == message2.Id()
+	}) {
+		t.Fatal("message 2 not in conversation")
+	} else {
+		if !slices.ContainsFunc(messages, func(m repository.Message) bool{
+			return m.Body() == message2.Body()
+		}) {
+			t.Fatal("message 2 was not edited")
+		}
+	}
+}
+
+
+
+
