@@ -18,38 +18,37 @@ type Conversation struct {
 	createDate string
 }
 
-func InsertConversation(name string) (*Conversation, error) {
+func InsertConversation(name string) (Conversation, error) {
 	var conversation Conversation
 
 	conversation.name = name
 	err := DatabaseConnection.QueryRow(INSERT_CONVERSATION_SQL, name).Scan(&conversation.id, &conversation.createDate)
 	if err != nil {
-		return nil, err
+		return Conversation{}, err
 	}
 
-	return &conversation, nil
+	return conversation, nil
 }
 
-func SelectConversationById(id string) (*Conversation, error) {
+func SelectConversationById(id string) (Conversation, error) {
 	var conversation Conversation
 
 	err := DatabaseConnection.QueryRow(SELECT_CONVERSATION_BY_ID_SQL, id).Scan(&conversation.id, &conversation.name, &conversation.createDate)
 	if err != nil {
-		return nil, err
+		return Conversation{}, err
 	}
 
-	return &conversation, nil
+	return conversation, nil
 }
 
-func SelectConversationsByUser(userId string) ([]*Conversation, error) {
-	var conversations []*Conversation
-
+func SelectConversationsByUser(userId string) ([]Conversation, error) {
 	rows, err := DatabaseConnection.Query(SELECT_CONVERSATIONS_BY_USER_SQL, userId)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
+	var conversations []Conversation
 	var conversation Conversation
 	for rows.Next() {
 		err := rows.Scan(&conversation.id, &conversation.name, &conversation.createDate)
@@ -57,8 +56,7 @@ func SelectConversationsByUser(userId string) ([]*Conversation, error) {
 			return nil, err
 		}
 
-		copy := conversation
-		conversations = append(conversations, &copy)
+		conversations = append(conversations, conversation)
 	}
 
 	return conversations, nil

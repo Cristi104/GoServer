@@ -31,7 +31,7 @@ func TestUser(t *testing.T) {
 		}
 	}()
 
-	user.Nickname = "test_nick"
+	user.SetNickname("test_nickname")
 
 	err = user.Update()
 	if err != nil {
@@ -39,7 +39,7 @@ func TestUser(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	user, err = repository.SelectUserById(user.Id)
+	user, err = repository.SelectUserById(user.Id())
 	if err != nil {
 		user.Delete()
 		t.Fatal(err)
@@ -101,19 +101,19 @@ func TestConversation(t *testing.T) {
 	}()
 
 	// add multiple users to conversation
-	err = conv.AddUsers([]string{user1.Id, user2.Id})
+	err = conv.AddUsers([]string{user1.Id(), user2.Id()})
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// test user 1 in conversation
-	convs, err := repository.SelectConversationsByUser(user1.Id)
+	convs, err := repository.SelectConversationsByUser(user1.Id())
 	fmt.Println(convs)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if !slices.ContainsFunc(convs, func(c *repository.Conversation) bool {
+	if !slices.ContainsFunc(convs, func(c repository.Conversation) bool {
 		fmt.Printf("idc: %s idg: %s, %t\n", c.Id(), conv.Id(), c.Id() == conv.Id())
 		return strings.Compare(c.Id(), conv.Id()) == 0
 	}) {
@@ -124,12 +124,12 @@ func TestConversation(t *testing.T) {
 	}
 
 	// test user 3 not in conversation
-	convs, err = repository.SelectConversationsByUser(user3.Id)
+	convs, err = repository.SelectConversationsByUser(user3.Id())
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if slices.ContainsFunc(convs, func(c *repository.Conversation) bool {
+	if slices.ContainsFunc(convs, func(c repository.Conversation) bool {
 		return strings.Compare(c.Id(), conv.Id()) == 0
 	}) {
 		t.Fatal("expected user3 to not be in conversation1")
@@ -146,18 +146,18 @@ func TestConversation(t *testing.T) {
 	}
 
 	// add user 3 to conversation
-	err = conv.AddUser(user3.Id)
+	err = conv.AddUser(user3.Id())
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// test that he is actualy added
-	convs, err = repository.SelectConversationsByUser(user3.Id)
+	convs, err = repository.SelectConversationsByUser(user3.Id())
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if !slices.ContainsFunc(convs, func(c *repository.Conversation) bool {
+	if !slices.ContainsFunc(convs, func(c repository.Conversation) bool {
 		return strings.Compare(c.Id(), conv.Id()) == 0
 	}) {
 		t.Fatal("expected user3 to be in conversation1")
