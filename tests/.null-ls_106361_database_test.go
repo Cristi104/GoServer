@@ -113,8 +113,8 @@ func TestConversation(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !slices.ContainsFunc(convs, func(c *repository.Conversation) bool {
-		fmt.Printf("idc: %s idg: %s, %t\n", c.Id(), conv.Id(), c.Id() == conv.Id())
+	if slices.ContainsFunc(convs, func(c *repository.Conversation) bool {
+		fmt.Printf("idc: %s idg: %s\n", c.Id(), conv.Id())
 		return strings.Compare(c.Id(), conv.Id()) == 0
 	}) {
 		t.Fatal("expected user1 to be in conversation1")
@@ -129,7 +129,7 @@ func TestConversation(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if slices.ContainsFunc(convs, func(c *repository.Conversation) bool {
+	if !slices.ContainsFunc(convs, func(c *repository.Conversation) bool {
 		return strings.Compare(c.Id(), conv.Id()) == 0
 	}) {
 		t.Fatal("expected user3 to not be in conversation1")
@@ -157,7 +157,7 @@ func TestConversation(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !slices.ContainsFunc(convs, func(c *repository.Conversation) bool {
+	if slices.ContainsFunc(convs, func(c *repository.Conversation) bool {
 		return strings.Compare(c.Id(), conv.Id()) == 0
 	}) {
 		t.Fatal("expected user3 to be in conversation1")
