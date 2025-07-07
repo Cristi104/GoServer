@@ -2,43 +2,13 @@ package handler
 
 import (
 	"GoServer/repository"
-	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
-
-	"github.com/golang-jwt/jwt/v5"
 )
 
 func ProfileHandler(w http.ResponseWriter, r *http.Request) {
-	auth, err := r.Cookie("auth")
+	user, err := authentifacateUser(r)
 	if err != nil {
-		errorResponseJson(w, "access denied", http.StatusUnauthorized)
-		return
-	}
-
-	token, err := validateJWT(auth.Value)
-	if err != nil {
-		errorResponseJson(w, "access denied", http.StatusUnauthorized)
-		return
-	}
-
-	var user repository.User
-	if claims, ok := token.Claims.(jwt.MapClaims); ok {
-		exp := claims["exp"].(float64)
-		expTime := time.Unix(int64(exp), 0)
-		if expTime.Before(time.Now()) {
-			errorResponseJson(w, "access denied", http.StatusUnauthorized)
-			return
-		}
-
-		userData := claims["userData"].(string)
-		err = json.Unmarshal([]byte(userData), &user)
-		if err != nil {
-			errorResponseJson(w, "access denied", http.StatusUnauthorized)
-			return
-		}
-	} else {
 		errorResponseJson(w, "access denied", http.StatusUnauthorized)
 		return
 	}

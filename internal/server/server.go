@@ -7,7 +7,9 @@ import (
 
 func Run() error {
 	http.HandleFunc("/", handler.FrontendHandler)
-	http.HandleFunc("/api/auth/signin", handler.SignInHandler)
-	http.HandleFunc("/api/auth/signup", handler.SignUpHandler)
+	http.HandleFunc("POST /api/auth/signin", handler.SignInHandler)
+	http.HandleFunc("POST /api/auth/signup", handler.SignUpHandler)
+	http.HandleFunc("GET /api/profile", handler.ProfileHandler)
+	http.HandleFunc("GET /api/conversations", handler.ConversationsHandler)
 	return http.ListenAndServe(":8080", nil)
 }

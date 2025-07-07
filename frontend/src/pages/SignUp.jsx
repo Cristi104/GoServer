@@ -1,21 +1,22 @@
 import getCookie from "../utils/cookies.js";
-import { Navigate, Link } from "react-router-dom";
+import { Navigate, Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from 'react';
+import ENDPOINT_URL from "../utils/config.js";
 
 function SignUp() {
     const [formData, setFormData] = useState({ username: "", email: "", password: "" });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
-    console.log(getCookie("auth"))
     if (getCookie("auth") != "") {
         return(<Navigate to="/Messanger" />);
     }
 
+    const navigate = useNavigate();
     function handleSubmit(e) {
         e.preventDefault();
         setLoading(true);
-        fetch("/api/auth/signup", {
+        fetch(ENDPOINT_URL + "/api/auth/signup", {
             method: "POST",
             headers: {
                 Accept: "application/json",
@@ -27,8 +28,9 @@ function SignUp() {
         .then(response => response.json())
         .then(data => {
             if(data.success){
-                setError("");
-                setLoading(false);
+                navigate("/Messanger")
+                // setError("");
+                // setLoading(false);
             } else {
                 setError(data.error);
                 setLoading(false);
@@ -101,10 +103,9 @@ function SignUp() {
                             Sign Up
                         </button>
                     </form>
-                    <button className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors my-3">
-                        <Link className="mb-3" to="/SignIn">
-                            Allready have an account?
-                        </Link>
+                    <button className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors my-3"
+                        onClick={(e) => {e.preventDefault(); navigate("/SignIn")}}>
+                        Allready have an account?
                     </button>
                 </div>
             </div>
