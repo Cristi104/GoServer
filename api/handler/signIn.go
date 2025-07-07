@@ -41,8 +41,8 @@ func SignInHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"userData":  userData,
-		"exp": time.Now().Add(time.Hour * 1).Unix(),
+		"userData": userData,
+		"exp":      time.Now().Add(time.Hour * 48).Unix(),
 	})
 
 	signedToken, err := token.SignedString([]byte(JWTKey))
@@ -53,7 +53,7 @@ func SignInHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("Content-type", "application/json")
 
-	cookie := http.Cookie{Name: "auth", Value: signedToken, Quoted: false, MaxAge: 60 * 60 * 1, Secure: false, HttpOnly: false, SameSite: http.SameSiteStrictMode}
+	cookie := http.Cookie{Name: "auth", Value: signedToken, Path: "/", Secure: false, HttpOnly: true, SameSite: http.SameSiteLaxMode}
 	http.SetCookie(w, &cookie)
 
 	w.WriteHeader(http.StatusOK)
