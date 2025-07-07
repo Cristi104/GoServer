@@ -6,17 +6,17 @@ const UPDATE_MESSAGE_SQL = "UPDATE messages SET body = $1 WHERE id = $2;"
 const DELETE_MESSAGE_SQL = "DELETE FROM messages WHERE id = $1;"
 
 type Message struct {
-	id string
-	sendDate string
-	body string
-	senderId string
-	conversationId string
+	Id string
+	SendDate string
+	Body string
+	SenderId string
+	ConversationId string
 }
 
 func InsertMessage(body, senderId, conversationId string) (Message, error) {
 	var message Message
 
-	err := DatabaseConnection.QueryRow(INSERT_MESSAGE_SQL, body, senderId, conversationId).Scan(&message.id, &message.sendDate)
+	err := DatabaseConnection.QueryRow(INSERT_MESSAGE_SQL, body, senderId, conversationId).Scan(&message.Id, &message.SendDate)
 	if err != nil {
 		return Message{}, err
 	}
@@ -35,7 +35,7 @@ func SelectMessagesByConversation(conversationId string) ([]Message, error) {
 	var messages []Message
 	var message Message
 	for rows.Next() {
-		err = rows.Scan(&message.id, &message.sendDate, &message.body, &message.senderId, &message.conversationId)
+		err = rows.Scan(&message.Id, &message.SendDate, &message.Body, &message.SenderId, &message.ConversationId)
 		if err != nil {
 			return nil, err
 		}
@@ -47,7 +47,7 @@ func SelectMessagesByConversation(conversationId string) ([]Message, error) {
 }
 
 func (m *Message) Update() error {
-	_, err := DatabaseConnection.Exec(UPDATE_MESSAGE_SQL, m.body, m.id)
+	_, err := DatabaseConnection.Exec(UPDATE_MESSAGE_SQL, m.Body, m.Id)
 	if err != nil {
 		return err
 	}
@@ -56,35 +56,11 @@ func (m *Message) Update() error {
 }
 
 func (m *Message) Delete() error {
-	_, err := DatabaseConnection.Exec(DELETE_MESSAGE_SQL, m.id)
+	_, err := DatabaseConnection.Exec(DELETE_MESSAGE_SQL, m.Id)
 	if err != nil {
 		return err
 	}
 
 	return nil
-}
-
-func (m *Message) Id() string {
-	return m.id
-}
-
-func (m *Message) SendDate() string {
-	return m.sendDate
-}
-
-func (m *Message) Body() string {
-	return m.body
-}
-
-func (m *Message) SenderId() string {
-	return m.senderId
-}
-
-func (m *Message) ConversationId() string {
-	return m.conversationId
-}
-
-func (m *Message) SetBody(body string)  {
-	m.body = body
 }
 

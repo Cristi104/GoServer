@@ -31,7 +31,7 @@ func TestUser(t *testing.T) {
 		}
 	}()
 
-	user.SetNickname("test_nickname")
+	user.Nickname = "test_nickname"
 
 	err = user.Update()
 	if err != nil {
@@ -39,7 +39,7 @@ func TestUser(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	user, err = repository.SelectUserById(user.Id())
+	user, err = repository.SelectUserById(user.Id)
 	if err != nil {
 		user.Delete()
 		t.Fatal(err)
@@ -101,21 +101,20 @@ func TestConversation(t *testing.T) {
 	}()
 
 	// add multiple users to conversation
-	err = conv.AddUsers([]string{user1.Id(), user2.Id()})
+	err = conv.AddUsers([]string{user1.Id, user2.Id})
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// test user 1 in conversation
-	convs, err := repository.SelectConversationsByUser(user1.Id())
+	convs, err := repository.SelectConversationsByUser(user1.Id)
 	fmt.Println(convs)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	if !slices.ContainsFunc(convs, func(c repository.Conversation) bool {
-		fmt.Printf("idc: %s idg: %s, %t\n", c.Id(), conv.Id(), c.Id() == conv.Id())
-		return strings.Compare(c.Id(), conv.Id()) == 0
+		return strings.Compare(c.Id, conv.Id) == 0
 	}) {
 		t.Fatal("expected user1 to be in conversation1")
 	}
@@ -124,13 +123,13 @@ func TestConversation(t *testing.T) {
 	}
 
 	// test user 3 not in conversation
-	convs, err = repository.SelectConversationsByUser(user3.Id())
+	convs, err = repository.SelectConversationsByUser(user3.Id)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	if slices.ContainsFunc(convs, func(c repository.Conversation) bool {
-		return strings.Compare(c.Id(), conv.Id()) == 0
+		return strings.Compare(c.Id, conv.Id) == 0
 	}) {
 		t.Fatal("expected user3 to not be in conversation1")
 	}
@@ -139,26 +138,26 @@ func TestConversation(t *testing.T) {
 	}
 
 	// test conversation update
-	conv.SetName("new name")
+	conv.Name = "new name"
 	err = conv.Update()
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// add user 3 to conversation
-	err = conv.AddUser(user3.Id())
+	err = conv.AddUser(user3.Id)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// test that he is actualy added
-	convs, err = repository.SelectConversationsByUser(user3.Id())
+	convs, err = repository.SelectConversationsByUser(user3.Id)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	if !slices.ContainsFunc(convs, func(c repository.Conversation) bool {
-		return strings.Compare(c.Id(), conv.Id()) == 0
+		return strings.Compare(c.Id, conv.Id) == 0
 	}) {
 		t.Fatal("expected user3 to be in conversation1")
 	}
@@ -209,13 +208,13 @@ func TestMessage(t *testing.T)  {
 	}()
 
 	// add users to conversation
-	err = conv.AddUsers([]string{user1.Id(), user2.Id()})
+	err = conv.AddUsers([]string{user1.Id, user2.Id})
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// send 2 messages
-	message1, err := repository.InsertMessage("test message from user 1", user1.Id(), conv.Id())
+	message1, err := repository.InsertMessage("test message from user 1", user1.Id, conv.Id)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -227,7 +226,7 @@ func TestMessage(t *testing.T)  {
 		}
 	}()
 
-	message2, err := repository.InsertMessage("test message from user 2", user2.Id(), conv.Id())
+	message2, err := repository.InsertMessage("test message from user 2", user2.Id, conv.Id)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -239,29 +238,29 @@ func TestMessage(t *testing.T)  {
 		}
 	}()
 
-	message2.SetBody("i have edited this message")
+	message2.Body = "i have edited this message"
 	err = message2.Update()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	messages, err := repository.SelectMessagesByConversation(conv.Id())
+	messages, err := repository.SelectMessagesByConversation(conv.Id)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	if !slices.ContainsFunc(messages, func(m repository.Message) bool {
-		return m.Id() == message1.Id()
+		return m.Id == message1.Id
 	}) {
 		t.Fatal("message 1 not in conversation")
 	}
 	if !slices.ContainsFunc(messages, func(m repository.Message) bool {
-		return m.Id() == message2.Id()
+		return m.Id == message2.Id
 	}) {
 		t.Fatal("message 2 not in conversation")
 	} else {
 		if !slices.ContainsFunc(messages, func(m repository.Message) bool{
-			return m.Body() == message2.Body()
+			return m.Body == message2.Body
 		}) {
 			t.Fatal("message 2 was not edited")
 		}

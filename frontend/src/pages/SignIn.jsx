@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 
 function SignIn() {
     const [formData, setFormData] = useState({ email: "", password: "" });
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
     console.log(getCookie("auth"))
