@@ -6,15 +6,73 @@ import (
 	"fmt"
 	"html"
 	"net/http"
+	"regexp"
 	"time"
+	"unicode"
 
 	jwt "github.com/golang-jwt/jwt/v5"
 )
+
+func isValidPassword(password string) bool {
+	var (
+		hasMinLen  = false
+		hasUpper   = false
+		hasLower   = false
+		hasNumber  = false
+		hasSpecial = false
+	)
+
+	if len(password) >= 8 {
+		hasMinLen = true
+	}
+
+	for _, ch := range password {
+		switch {
+		case unicode.IsUpper(ch):
+			hasUpper = true
+		case unicode.IsLower(ch):
+			hasLower = true
+		case unicode.IsDigit(ch):
+			hasNumber = true
+		case unicode.IsPunct(ch) || unicode.IsSymbol(ch):
+			hasSpecial = true
+		}
+	}
+	return hasMinLen && hasUpper && hasLower && hasNumber && hasSpecial
+}
+
+func isValidUsername(username string) bool {
+	var (
+		hasMinLen = false
+		hasUpper  = false
+		hasLower  = false
+	)
+
+	if len(username) >= 8 {
+		hasMinLen = true
+	}
+
+	for _, ch := range username {
+		switch {
+		case unicode.IsUpper(ch):
+			hasUpper = true
+		case unicode.IsLower(ch):
+			hasLower = true
+		}
+	}
+	return hasMinLen && (hasUpper || hasLower)
+}
 
 type signUpCredentials struct {
 	Username string
 	Email    string
 	Password string
+}
+
+func errorResponseJson(w http.ResponseWriter, err string) {
+	w.Header().Add("Content-type", "application/json")
+	w.WriteHeader(http.StatusBadRequest)
+	w.Write([]byte(fmt.Sprintf("{\"success\":%s, \"error\":\"%s\"}", "false", err)))
 }
 
 func SignUpHandler(w http.ResponseWriter, r *http.Request) {
@@ -30,15 +88,31 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	data.Email = html.EscapeString(data.Email)
 	data.Password = html.EscapeString(data.Password)
 
+	if !isValidUsername(data.Username) {
+		errorResponseJson(w, "invalid username (at least 8 letters long)")
+		return
+	}
+
+	matched, err := regexp.Match("^[A-Za-z0-9]+@[a-z]+\\.[a-z][a-z][a-z]?$", []byte(data.Email))
+	if err != nil || !matched {
+		errorResponseJson(w, "invalid email")
+		return
+	}
+
+	if !isValidPassword(data.Password) {
+		errorResponseJson(w, "invalid password (atleast 8 characters long, one uppercase, one lowercase, one letter and one symbol)")
+		return
+	}
+
 	user, err := repository.InsertUser(data.Username, data.Email, data.Password)
 	if err != nil {
-		http.Error(w, "invalid email or username allready in use", http.StatusBadRequest)
+		errorResponseJson(w, "email or username allready in use")
 		return
 	}
 
 	userData, err := json.Marshal(user)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		errorResponseJson(w, err.Error())
 		return
 	}
 
@@ -49,7 +123,7 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 
 	signedToken, err := token.SignedString([]byte(JWTKey))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		errorResponseJson(w, err.Error())
 		return
 	}
 
