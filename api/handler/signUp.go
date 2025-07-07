@@ -7,10 +7,7 @@ import (
 	"html"
 	"net/http"
 	"regexp"
-	"time"
 	"unicode"
-
-	jwt "github.com/golang-jwt/jwt/v5"
 )
 
 func isValidPassword(password string) bool {
@@ -69,18 +66,12 @@ type signUpCredentials struct {
 	Password string
 }
 
-func errorResponseJson(w http.ResponseWriter, err string) {
-	w.Header().Add("Content-type", "application/json")
-	w.WriteHeader(http.StatusBadRequest)
-	w.Write([]byte(fmt.Sprintf("{\"success\":%s, \"error\":\"%s\"}", "false", err)))
-}
-
 func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	var data signUpCredentials
 
 	err := json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "error please try agian later", http.StatusBadRequest)
 		return
 	}
 
@@ -89,47 +80,42 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	data.Password = html.EscapeString(data.Password)
 
 	if !isValidUsername(data.Username) {
-		errorResponseJson(w, "invalid username (at least 8 letters long)")
+		errorResponseJson(w, "invalid username (at least 8 letters long)", http.StatusBadRequest)
 		return
 	}
 
 	matched, err := regexp.Match("^[A-Za-z0-9]+@[a-z]+\\.[a-z][a-z][a-z]?$", []byte(data.Email))
 	if err != nil || !matched {
-		errorResponseJson(w, "invalid email")
+		errorResponseJson(w, "invalid email", http.StatusBadRequest)
 		return
 	}
 
 	if !isValidPassword(data.Password) {
-		errorResponseJson(w, "invalid password (atleast 8 characters long, one uppercase, one lowercase, one letter and one symbol)")
+		errorResponseJson(w, "invalid password (atleast 8 characters long, one uppercase, one lowercase, one letter and one symbol)", http.StatusBadRequest)
 		return
 	}
 
 	user, err := repository.InsertUser(data.Username, data.Email, data.Password)
 	if err != nil {
-		errorResponseJson(w, "email or username allready in use")
+		errorResponseJson(w, "email or username allready in use", http.StatusBadRequest)
 		return
 	}
 
 	userData, err := json.Marshal(user)
 	if err != nil {
-		errorResponseJson(w, err.Error())
+		errorResponseJson(w, "error please try agian later", http.StatusBadRequest)
 		return
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"userData": userData,
-		"exp":      time.Now().Add(time.Hour * 48).Unix(),
-	})
-
-	signedToken, err := token.SignedString([]byte(JWTKey))
+	signedToken, err := createAuthJWT(string(userData))
 	if err != nil {
-		errorResponseJson(w, err.Error())
+		errorResponseJson(w, "error please try agian later", http.StatusBadRequest)
 		return
 	}
 
 	w.Header().Add("Content-type", "application/json")
 
-	cookie := http.Cookie{Name: "auth", Value: signedToken, Path: "/", Secure: false, HttpOnly: true, SameSite: http.SameSiteLaxMode}
+	cookie := http.Cookie{Name: "auth", Value: signedToken, Path: "/", Secure: true, HttpOnly: true, SameSite: http.SameSiteLaxMode}
 	http.SetCookie(w, &cookie)
 
 	w.WriteHeader(http.StatusOK)
