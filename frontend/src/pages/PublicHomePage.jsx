@@ -1,12 +1,7 @@
-import getCookie from "../utils/cookies.js";
 import { Navigate, Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from 'react';
 
 function PublicHomePage() {
-
-    if (getCookie("auth") != "") {
-        return(<Navigate to="/Messanger" />);
-    }
 
     const navigate = useNavigate();
 

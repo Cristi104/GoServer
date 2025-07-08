@@ -1,4 +1,3 @@
-import getCookie from "../utils/cookies.js";
 import { Navigate, Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from 'react';
 import ENDPOINT_URL from "../utils/config.js";
@@ -7,10 +6,6 @@ function SignIn() {
     const [formData, setFormData] = useState({ email: "", password: "" });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-
-    if (getCookie("auth") != "") {
-        return(<Navigate to="/Messanger" />);
-    }
 
     const navigate = useNavigate();
     function handleSubmit(e) {

@@ -1,4 +1,3 @@
-import getCookie from "../utils/cookies.js";
 import { Outlet, Navigate } from "react-router-dom";
 import { useState, useEffect } from 'react';
 import AllConversations from './AllConversations.jsx';
@@ -8,11 +7,6 @@ function Layout() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [profile, setProfile] = useState("");
-
-    console.log(getCookie("auth"))
-    // if (getCookie("auth") == "") {
-    //     return(<Navigate to="/" />);
-    // }   
 
     return (
         <>

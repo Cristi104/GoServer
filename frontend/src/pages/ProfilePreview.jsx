@@ -1,5 +1,4 @@
-import getCookie from "../utils/cookies.js";
-import { Outlet, Navigate, Link } from "react-router-dom";
+import { Outlet, Navigate, Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from 'react';
 import ENDPOINT_URL from "../utils/config.js";
 
@@ -27,6 +26,8 @@ function ProfilePreview() {
             setLoading(false);
         })
     }, [])
+
+    const navigate = useNavigate()
 
     if(loading) 
         return (
