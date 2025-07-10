@@ -8,7 +8,7 @@ function ProfilePreview() {
     const [profile, setProfile] = useState("");
 
     useEffect(() => {
-        fetch(ENDPOINT_URL + "/api/profile", {
+        fetch(ENDPOINT_URL + `/api/profiles/${localStorage.getItem("userId")}`, {
             method: "GET",
         })
         .then((response) => response.json())

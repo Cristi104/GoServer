@@ -148,7 +148,7 @@ function AddFriend({ onAction }) {
                 "Content-type": "application/json",
             },
             credentials: "same-origin",
-            body: JSON.stringify({id: id}),
+            body: JSON.stringify({Action: "addFriend", Id: id}),
         })
         .then(response => response.json())
         .then(data => {
@@ -233,11 +233,33 @@ function AddFriend({ onAction }) {
 function NewGroup({ onAction }) {
     const [isOpen, setIsOpen] = useState(false);
     const [formData, setFormData] = useState({ name: "" });
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const [profiles, setProfiles] = useState(null);
+    const [friends, setFriends] = useState(null);
     // const [profiles, setProfiles] = useState([{id: 1, username: "u1", nickname: "nick1"}, {id: 2, username: "u2", nickname: "nick2"}]);
-    const [friends, setFriends] = useState([])
+    const [addedFriends, setAddedFriends] = useState([])
+
+    useEffect(() => {
+        if(loading){
+            fetch("/api/profiles/friends", {
+                method: "GET"
+            })
+            .then((response) => response.json())
+            .then((data) => {
+                if(data.success){
+                    setFriends(data.friends)
+                    setLoading(false)
+                } else {
+                    setError(data.error)
+                    setLoading(false)
+                }
+            })
+            .catch((error) => {
+                setError(error.message)
+                setLoading(false)
+            })
+        }
+    }, [loading])
 
     useEffect(() => {
         const handleKeyDown = (event) => {
@@ -264,7 +286,7 @@ function NewGroup({ onAction }) {
                 Accept: "application/json",
                 "Content-type": "application/json",
             },
-            body: JSON.stringify({action: "createGroup", users: friends}),
+            body: JSON.stringify({Action: "createGroup", Name: formData.name, Users: addedFriends}),
             credentials: "same-origin",
         })
         .then(response => response.json())
@@ -294,11 +316,11 @@ function NewGroup({ onAction }) {
     }
 
     function addFriend(id) {
-        setFriends([...friends, id])
+        setAddedFriends([...addedFriends, id])
     }
 
     function removeFriend(id) {
-        setFriends(friends.filter((item) => item != id))
+        setAddedFriends(addedFriends.filter((item) => item != id))
     }
 
     return (
@@ -330,12 +352,12 @@ function NewGroup({ onAction }) {
                                 </button>
                             </div>
                             <div className="flex w-full my-1">
-                                {profiles == null ? "" : (profiles.map((profile, index) => (
-                                    friends.includes(profile.id) ? (
+                                {friends == null ? "" : (friends.map((friend, index) => (
+                                    addedFriends.includes(friend.id) ? (
                                         <div className="w-fit h-fit bg-blue-200 rounded-lg transition-colors my-1 flex flex-row pl-1 m-1">
-                                            <p className="text-xs p-1">{profile.nickname}</p>
+                                            <p className="text-xs p-1">{friend.nickname}</p>
                                             <button className="w-fit h-fit p-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors ml-auto"
-                                                onClick={(e) => removeFriend(profile.id)}>
+                                                onClick={(e) => removeFriend(friend.id)}>
                                                 <SquareX />
                                             </button>
                                         </div>
@@ -349,17 +371,17 @@ function NewGroup({ onAction }) {
                             </div>
                         ) : (
                             <div className="flex flex-col items-center my-2 justify-center min-h-40 overflow-y-auto max-h-120">
-                                {profiles == null ? (
+                                {friends == null ? (
                                     <div className="w-full h-4 items-center justify-center">
                                         <p className="text-1xl text-gray-700 text-center">{error}</p>
                                     </div>
-                                ) : (profiles.map((profile, index) => (
+                                ) : (friends.map((friend, index) => (
                                     <div className="w-full h-fit bg-blue-200 rounded-lg transition-colors my-1 flex flex-row pl-1">
-                                        <p className="text-md py-2 px-1 p-1">{profile.nickname}</p>
-                                        <p className="text-xs py-2 px-1 text-gray-600">@{profile.username}</p>
-                                        {!friends.includes(profile.id) ? (
+                                        <p className="text-md py-2 px-1 p-1">{friend.nickname}</p>
+                                        <p className="text-xs py-2 px-1 text-gray-600">@{friend.username}</p>
+                                        {!addedFriends.includes(friend.id) ? (
                                             <button className="w-fit p-2 h-fit bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors ml-auto"
-                                                onClick={(e) => addFriend(profile.id)}>
+                                                onClick={(e) => addFriend(friend.id)}>
                                                 <SquarePlus />
                                             </button>
                                         ) : ""}

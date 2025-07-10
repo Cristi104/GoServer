@@ -119,5 +119,5 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &cookie)
 
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(fmt.Sprintf("{\"success\":%s, \"error\":\"%s\"}", "true", "none")))
+	w.Write([]byte(fmt.Sprintf(`{"success":true, "error":"none", "userId": "%s"}`, user.Id)))
 }

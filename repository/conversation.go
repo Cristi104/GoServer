@@ -7,7 +7,20 @@ import (
 
 const INSERT_CONVERSATION_SQL = "INSERT INTO conversations(name) VALUES($1) RETURNING id, create_date;"
 const SELECT_CONVERSATION_BY_ID_SQL = "SELECT * FROM conversations WHERE id = $1;"
-const SELECT_CONVERSATIONS_BY_USER_SQL = "SELECT c.* FROM conversations c LEFT JOIN in_conversation ic ON c.id = ic.conversation_id WHERE ic.user_id = $1;"
+// const SELECT_CONVERSATIONS_BY_USER_SQL = "SELECT c.* FROM conversations c LEFT JOIN in_conversation ic ON c.id = ic.conversation_id WHERE ic.user_id = $1;"
+const SELECT_CONVERSATIONS_BY_USER_SQL = `
+SELECT c.id,
+CASE
+	WHEN c.name = 'DM' THEN (
+		SELECT u.nickname 
+		FROM users u LEFT JOIN in_conversation ic2 on u.id = ic2.user_id 
+		WHERE ic2.conversation_id = c.id AND ic2.user_id != $1
+	)
+	ELSE c.name
+END AS "name", c.create_date
+FROM conversations c LEFT JOIN in_conversation ic on c.id = ic.conversation_id
+WHERE ic.user_id = '7be3e465-e058-49a2-9126-48af79b63cea';
+`
 const UPDATE_CONVERSATION_SQL = "UPDATE conversations SET name = $1 WHERE id = $2;"
 const DELETE_CONVERSATION_SQL = "DELETE FROM conversations WHERE id = $1;"
 const INSERT_USERS_IN_CONVERSATION_SQL = "INSERT INTO in_conversation(conversation_id, user_id) VALUES"

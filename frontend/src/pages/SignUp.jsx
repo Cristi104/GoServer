@@ -23,6 +23,7 @@ function SignUp() {
         .then(response => response.json())
         .then(data => {
             if(data.success){
+                localStorage.setItem("userId", data.userId)
                 navigate("/Messanger")
                 // setError("");
                 // setLoading(false);
