@@ -15,11 +15,15 @@ func GetAllConversations(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conversations, err :=repository.SelectConversationsByUser(user.Id)
+	conversations, err := repository.SelectConversationsByUser(user.Id)
 	conversationsJson, err := json.Marshal(conversations)
 	if err != nil {
 		errorResponseJson(w, "access denied", http.StatusUnauthorized)
 		return
+	}
+
+	if string(conversationsJson) == "null" {
+		conversationsJson = []byte("[]")
 	}
 
 	w.Header().Add("Content-type", "application/json")
@@ -33,8 +37,8 @@ func GetAllConversations(w http.ResponseWriter, r *http.Request) {
 
 type createConversationData struct {
 	Action string
-	Name string
-	Users []string
+	Name   string
+	Users  []string
 }
 
 func CreateConversation(w http.ResponseWriter, r *http.Request) {

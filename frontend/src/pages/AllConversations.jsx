@@ -6,7 +6,7 @@ import ENDPOINT_URL from "../utils/config.js";
 function AllConversations() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const [conversations, setConversations] = useState("");
+    const [conversations, setConversations] = useState([]);
 
     useEffect(() => {
         if(loading){
@@ -57,10 +57,10 @@ function AllConversations() {
         <>
             <div className="h-full w-full overflow-y-auto bg-blue-200 my-1 rounded-md">
                 <div className="flex flex-row w-full h-fit justify-end p-1">
-                    <NewGroup />
-                    <AddFriend />
+                    <NewGroup returnData={(convo) => {setConversations([...conversations, convo])}} />
+                    <AddFriend returnData={(convo) => {setConversations([...conversations, convo])}} />
                 </div>
-                {conversations != null ? conversations.map((convo, index) => (
+                {conversations.length != 0 ? conversations.map((convo, index) => (
                     <div className="grid grid-cols-1 w-max p-1 h-fit bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors my-2">
                         <div className="items-center justify-center">
                             <p className="text-1xl text-gray-100">{convo.Name}</p>
@@ -80,12 +80,12 @@ function AllConversations() {
     
 }
 
-function AddFriend({ onAction }) {
+function AddFriend({ returnData }) {
     const [isOpen, setIsOpen] = useState(false);
     const [formData, setFormData] = useState({ username: "" });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-    const [profiles, setProfiles] = useState(null);
+    const [profiles, setProfiles] = useState([]);
 
     useEffect(() => {
         const handleKeyDown = (event) => {
@@ -141,6 +141,7 @@ function AddFriend({ onAction }) {
     }
 
     function addFriend(id) {
+        setLoading(true)
         fetch(ENDPOINT_URL + "/api/profiles/friends", {
             method: "POST",
             headers: {
@@ -153,7 +154,7 @@ function AddFriend({ onAction }) {
         .then(response => response.json())
         .then(data => {
             if(data.success){
-                onAction(true);
+                returnData(data.conversation);
                 setError("");
                 setLoading(false);
             } else {
@@ -202,7 +203,7 @@ function AddFriend({ onAction }) {
                             </div>
                         ) : (
                             <div className="flex flex-col items-center m-2 justify-center overflow-y-auto max-h-120 min-h-40">
-                                {profiles == null ? (
+                                {profiles.length == 0 ? (
                                     <div className="w-full h-4 items-center justify-center">
                                         <p className="text-1xl text-gray-700 text-center">{error}</p>
                                     </div>
@@ -230,17 +231,18 @@ function AddFriend({ onAction }) {
     );
 }
 
-function NewGroup({ onAction }) {
+function NewGroup({ returnData }) {
     const [isOpen, setIsOpen] = useState(false);
     const [formData, setFormData] = useState({ name: "" });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const [friends, setFriends] = useState(null);
+    const [friends, setFriends] = useState([]);
     // const [profiles, setProfiles] = useState([{id: 1, username: "u1", nickname: "nick1"}, {id: 2, username: "u2", nickname: "nick2"}]);
     const [addedFriends, setAddedFriends] = useState([])
 
     useEffect(() => {
-        if(loading){
+        setLoading(true);
+        if(isOpen){
             fetch("/api/profiles/friends", {
                 method: "GET"
             })
@@ -259,7 +261,7 @@ function NewGroup({ onAction }) {
                 setLoading(false)
             })
         }
-    }, [loading])
+    }, [isOpen])
 
     useEffect(() => {
         const handleKeyDown = (event) => {
@@ -292,7 +294,7 @@ function NewGroup({ onAction }) {
         .then(response => response.json())
         .then(data => {
             if(data.success){
-                onAction(true);
+                returnData(data.conversation);
                 setError("");
                 setLoading(false);
             } else {
@@ -352,7 +354,7 @@ function NewGroup({ onAction }) {
                                 </button>
                             </div>
                             <div className="flex w-full my-1">
-                                {friends == null ? "" : (friends.map((friend, index) => (
+                                {friends.length == 0 ? "" : (friends.map((friend, index) => (
                                     addedFriends.includes(friend.id) ? (
                                         <div className="w-fit h-fit bg-blue-200 rounded-lg transition-colors my-1 flex flex-row pl-1 m-1">
                                             <p className="text-xs p-1">{friend.nickname}</p>
@@ -371,7 +373,7 @@ function NewGroup({ onAction }) {
                             </div>
                         ) : (
                             <div className="flex flex-col items-center my-2 justify-center min-h-40 overflow-y-auto max-h-120">
-                                {friends == null ? (
+                                {friends.length == 0 ? (
                                     <div className="w-full h-4 items-center justify-center">
                                         <p className="text-1xl text-gray-700 text-center">{error}</p>
                                     </div>
