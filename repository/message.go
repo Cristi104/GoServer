@@ -1,7 +1,25 @@
 package repository
 
-const INSERT_MESSAGE_SQL = "INSERT INTO messages(body, sender_id, conversation_id) VALUES ($1, $2, $3) RETURNING id, send_date;"
-const SELECT_MESSAGES_BY_CONVERSATION_SQL = "SELECT * FROM messages WHERE conversation_id = $1;"
+const INSERT_MESSAGE_SQL = `
+INSERT INTO messages(body, sender_id, conversation_id)
+SELECT $1, $2, $3
+WHERE EXISTS(
+    SELECT 1
+    FROM in_conversation
+    WHERE user_id = $2 AND conversation_id = $3
+) RETURNING id, send_date;
+`
+const SELECT_MESSAGES_BY_CONVERSATION_SQL = `
+SELECT *
+FROM messages  
+WHERE conversation_id = $1 
+AND EXISTS(
+    SELECT 1
+    FROM in_conversation
+    WHERE user_id = $2 AND conversation_id = $1
+)
+ORDER BY send_date;
+`
 const UPDATE_MESSAGE_SQL = "UPDATE messages SET body = $1 WHERE id = $2;"
 const DELETE_MESSAGE_SQL = "DELETE FROM messages WHERE id = $1;"
 
@@ -24,8 +42,8 @@ func InsertMessage(body, senderId, conversationId string) (Message, error) {
 	return message, nil
 }
 
-func SelectMessagesByConversation(conversationId string) ([]Message, error) {
-	rows, err := DatabaseConnection.Query(SELECT_MESSAGES_BY_CONVERSATION_SQL, conversationId)
+func SelectMessagesByConversation(conversationId string, userId string) ([]Message, error) {
+	rows, err := DatabaseConnection.Query(SELECT_MESSAGES_BY_CONVERSATION_SQL, conversationId, userId)
 	if err != nil {
 		return nil, err
 	}

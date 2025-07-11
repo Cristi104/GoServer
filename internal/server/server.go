@@ -28,6 +28,13 @@ func Run() error {
 		r.Route("/conversations", func(r chi.Router) {
 			r.Get("/", handler.GetAllConversations)
 			r.Post("/", handler.CreateConversation)
+			r.Route("/{id}", func(r chi.Router) {
+				r.Route("/messages", func(r chi.Router) {
+					r.Get("/", handler.GetAllMessages)
+					r.Post("/", handler.CreateMessage)
+					r.Get("/listener", handler.MessageListener)
+				})
+			})
 		})
 	})
 

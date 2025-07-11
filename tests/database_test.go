@@ -244,7 +244,7 @@ func TestMessage(t *testing.T)  {
 		t.Fatal(err)
 	}
 
-	messages, err := repository.SelectMessagesByConversation(conv.Id)
+	messages, err := repository.SelectMessagesByConversation(conv.Id, user1.Id)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -19,7 +19,7 @@ CASE
 	ELSE c.name
 END AS "name", c.create_date
 FROM conversations c LEFT JOIN in_conversation ic on c.id = ic.conversation_id
-WHERE ic.user_id = '7be3e465-e058-49a2-9126-48af79b63cea';
+WHERE ic.user_id = $1;
 `
 const UPDATE_CONVERSATION_SQL = "UPDATE conversations SET name = $1 WHERE id = $2;"
 const DELETE_CONVERSATION_SQL = "DELETE FROM conversations WHERE id = $1;"
