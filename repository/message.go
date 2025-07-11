@@ -33,6 +33,9 @@ type Message struct {
 
 func InsertMessage(body, senderId, conversationId string) (Message, error) {
 	var message Message
+	message.Body = body
+	message.SenderId = senderId
+	message.ConversationId = conversationId
 
 	err := DatabaseConnection.QueryRow(INSERT_MESSAGE_SQL, body, senderId, conversationId).Scan(&message.Id, &message.SendDate)
 	if err != nil {

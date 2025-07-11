@@ -7,6 +7,7 @@ import (
 	"html"
 	"log"
 	"net/http"
+	"slices"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -16,12 +17,7 @@ type createMessageData struct {
 	Body           string
 }
 
-type listener struct {
-	flusher http.Flusher
-	w       http.ResponseWriter
-}
-
-var messageListeners = make(map[string][]listener)
+var messageListeners = make(map[string][]chan string)
 
 func CreateMessage(w http.ResponseWriter, r *http.Request) {
 	user, err := authentifacateUser(r)
@@ -56,12 +52,8 @@ func CreateMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, f := range messageListeners[data.ConversationId] {
-		f.w.Write([]byte(fmt.Sprintf(`{
-			success": true, 
-			error": "none", 
-			message": [%s]
-		}`, messageJson)))
+	for _, ch := range messageListeners[data.ConversationId] {
+		ch <- fmt.Sprintf(`{"success": true, "error": "none", "messages": [%s]}`, messageJson)
 	}
 
 	w.Header().Add("Content-type", "application/json")
@@ -101,7 +93,7 @@ func GetAllMessages(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(fmt.Sprintf(`{
 		"success": true, 
 		"error": "none", 
-		"message": %s
+		"messages": %s
 	}`, messagesJson)))
 }
 
@@ -132,17 +124,30 @@ func MessageListener(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
 
-	w.Write([]byte(fmt.Sprintf(`{
-		"success": true, 
-		"error": "none", 
-		"message": %s
-	}`, messagesJson)))
+	fmt.Fprintf(w, `data: {"success": true, "error": "none", "messages": %s}%s`, messagesJson, "\n\n")
 
 	flusher, ok := w.(http.Flusher)
 	if !ok {
 		errorResponseJson(w, "Streaming not supported", http.StatusInternalServerError)
 		return
 	}
+	flusher.Flush()
 
-	messageListeners[conversationId] = append(messageListeners[conversationId], listener{w: w, flusher: flusher})
+	notify := r.Context().Done()
+	messageChan := make(chan string)
+	messageListeners[conversationId] = append(messageListeners[conversationId], messageChan)
+	for {
+		select {
+		case <-notify:
+			fmt.Println("Client disconnected")
+			messageListeners[conversationId] = slices.DeleteFunc(messageListeners[conversationId], func(ch chan string) bool {
+				return ch == messageChan
+			})
+			return
+		case msg := <-messageChan:
+			fmt.Fprintf(w, "data: %s\n\n", msg)
+			flusher.Flush()
+		}
+	}
+
 }

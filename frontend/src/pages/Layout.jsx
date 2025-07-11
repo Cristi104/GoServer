@@ -10,12 +10,12 @@ function Layout() {
 
     return (
         <>
-            <div className="grid grid-cols-2 bg-blue-100 mx-1">
+            <div className="flex flex-row bg-blue-100 mx-1">
                 <div className="flex flex-col w-48 h-screen">
                     <ProfilePreview />
                     <AllConversations />
                 </div>
-                <div>
+                <div className="flex flex-col w-full h-screen">
                     <Outlet />
                 </div>
             </div>
