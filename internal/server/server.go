@@ -2,6 +2,7 @@ package server
 
 import (
 	"GoServer/api/handler"
+	"GoServer/api/middleware"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -9,6 +10,8 @@ import (
 
 func Run() error {
 	r := chi.NewRouter()
+
+	r.Use(middleware.CsrfMiddleware)
 
 	r.Route("/api", func(r chi.Router) {
 		r.Route("/auth", func(r chi.Router) {
@@ -34,8 +37,13 @@ func Run() error {
 					r.Post("/", handler.CreateMessage)
 					r.Get("/listener", handler.MessageListener)
 				})
+				r.Route("/users", func(r chi.Router) {
+					r.Get("/", handler.GetAllConversationUsers)
+				})
 			})
 		})
+
+		r.Get("/csrf", handler.GetCSRFToken)
 	})
 
 	r.Get("/*", handler.FrontendHandler)

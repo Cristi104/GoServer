@@ -48,6 +48,4 @@ func init() {
 	}
 
 	JWTKey = token.Key
-
-
 }

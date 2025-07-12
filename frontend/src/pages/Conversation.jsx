@@ -2,10 +2,12 @@ import { Navigate, Link, useParams } from "react-router-dom";
 import { useState, useEffect, useRef } from 'react';
 import { Send } from "lucide-react";
 import ENDPOINT_URL from "../utils/config.js";
+import htmlUnsecape from "../utils/htmlEscape.js";
 
 function Conversation() {
     const [formData, setFormData] = useState({ body: "" });
     const [messages, setMessages] = useState([]);
+    const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const messageBox = useRef(null);
@@ -17,9 +19,34 @@ function Conversation() {
             messageBox.current.scrollTop = messageBox.current.scrollHeight;
         }
     }, [messages])
-    
 
     useEffect(() => {
+        setUsers([]);
+        fetch(ENDPOINT_URL + `/api/conversations/${id}/users`, {
+            method: "GET",
+            headers: {
+                Accept: "application/json",
+                "Content-type": "application/json",
+                "X-CSRF-Token": localStorage.getItem("csrfToken"),
+            },
+            credentials: "same-origin",
+        })
+        .then((response) => response.json())
+        .then((data) => {
+            if(data.success){
+                setUsers(data.users)
+                setLoading(false)
+            } else {
+                setError(data.error)
+                setLoading(false)
+            }
+        })
+        .catch((error) => {
+            setError(error.message)
+            setLoading(false)
+        })
+
+        setMessages([]);
         const messageSource = new EventSource(ENDPOINT_URL + `/api/conversations/${id}/messages/listener`)
         messageSource.onmessage = (e) => {
             let data = JSON.parse(e.data)
@@ -35,7 +62,7 @@ function Conversation() {
         return () => {
             messageSource.close();
         }
-    }, [])
+    }, [id])
     
     function handleSubmit(e) {
         e.preventDefault();
@@ -45,9 +72,10 @@ function Conversation() {
             headers: {
                 Accept: "application/json",
                 "Content-type": "application/json",
+                "X-CSRF-Token": localStorage.getItem("csrfToken"),
             },
-            body: JSON.stringify({Action: "createMessage", Body: formData.body, ConversationId: id}),
             credentials: "same-origin",
+            body: JSON.stringify({Action: "createMessage", Body: formData.body, ConversationId: id}),
         })
         .then(response => response.json())
         .then(data => {
@@ -63,6 +91,10 @@ function Conversation() {
             setError(error.message);
             setLoading(false);
         })
+        setFormData((prevData) => ({
+            ...prevData,
+            body: "",
+        }));
     }
 
     function handleChange(e) {
@@ -74,26 +106,38 @@ function Conversation() {
         }));
     }
 
+    if(loading)
+        return (
+            <>
+                <div className="flex items-center justify-center h-full bg-blue-200 my-1 rounded-md">
+                    <div className="w-16 h-16 border-4 border-dashed rounded-full border-blue-500 animate-spin"></div>
+                </div>
+            </>
+        );
+
+    const nicknameMap = new Map();
+    users.forEach(element => {
+        nicknameMap.set(element.id, element.nickname)
+    });
     return (
         <>
-            <div className="flex flex-col w-full h-full bg-blue-200 rounded-md m-1 p-1">
+            <div className="flex flex-col w-full h-full bg-blue-200 rounded-md p-1">
                 {loading ? (
                     <div className="flex items-center m-2 justify-center min-h-40">
                         <div className="w-16 h-16 border-4 border-dashed rounded-full border-blue-500 animate-spin m-1"></div>
                     </div>
                 ) : (
                     <>
-                        <div ref={messageBox} className="w-full h-full overflow-y-auto">
+                        <div ref={messageBox} className="w-full h-full overflow-y-auto no-scrollbar">
                             {messages.length != 0 ? messages.map((message, index) => (
-                                <button className="grid grid-cols-1 w-full p-1 h-fit bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors my-2"
-                                    onClick={(e) => {e.stopPropagation(); navigate(`/Messanger/${convo.Id}`)}}>
+                                <div className={"grid grid-cols-1 max-w-3/4 w-fit p-1 h-fit bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors my-2 " + (message.SenderId == localStorage.getItem("userId") ? "ml-auto" : "mr-auto")}>
                                     <div className="items-center justify-center">
-                                        <p className="text-1xl text-gray-100">{message.SenderId}</p>
+                                        <p className="text-1xl text-gray-100">{nicknameMap.get(message.SenderId)}</p>
                                     </div>
                                     <div className="items-center justify-center">
-                                        <p className="text-sm text-gray-200">{message.Body}</p>
+                                        <p className="text-sm text-gray-200">{htmlUnsecape(message.Body)}</p>
                                     </div>
-                                </button>
+                                </div>
                             )) : (
                                 <div className="items-center justify-center w-full">
                                     <p className="text-1xl text-gray-700 text-center">You have no messages.</p>
@@ -102,8 +146,7 @@ function Conversation() {
                         </div>
                         <form onSubmit={handleSubmit} className="w-full h-fit">
                             <div className="flex flex-row">
-                                <input
-                                    placeholder="Group name"
+                                <input autocomplete="off"
                                     type="text"
                                     name="body"
                                     value={formData.body}

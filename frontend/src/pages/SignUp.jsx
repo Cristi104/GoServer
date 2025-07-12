@@ -16,6 +16,7 @@ function SignUp() {
             headers: {
                 Accept: "application/json",
                 "Content-type": "application/json",
+                "X-CSRF-Token": localStorage.getItem("csrfToken"),
             },
             credentials: "same-origin",
             body: JSON.stringify(formData),
@@ -55,17 +56,17 @@ function SignUp() {
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
                             <label className="block text-gray-700 font-medium mb-1">Username</label>
-                            <input
+                            <input autocomplete="off"
                                 type="text"
                                 name="username"
-                                value={formData.usernam}
+                                value={formData.username}
                                 onChange={handleChange}
                                 className="w-full border border-blue-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             />
                         </div>
                         <div>
                             <label className="block text-gray-700 font-medium mb-1">Email</label>
-                            <input
+                            <input autocomplete="off"
                                 type="text"
                                 name="email"
                                 value={formData.email}
@@ -77,7 +78,7 @@ function SignUp() {
                             <label className="block text-gray-700 font-medium mb-1">
                                 Password
                             </label>
-                            <input
+                            <input autocomplete="off"
                                 type="password"
                                 name="password"
                                 value={formData.password}

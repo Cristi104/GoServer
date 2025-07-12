@@ -10,6 +10,12 @@ function ProfilePreview() {
     useEffect(() => {
         fetch(ENDPOINT_URL + `/api/profiles/${localStorage.getItem("userId")}`, {
             method: "GET",
+            headers: {
+                Accept: "application/json",
+                "Content-type": "application/json",
+                "X-CSRF-Token": localStorage.getItem("csrfToken"),
+            },
+            credentials: "same-origin",
         })
         .then((response) => response.json())
         .then((data) => {

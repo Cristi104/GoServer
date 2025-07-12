@@ -120,6 +120,10 @@ func MessageListener(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if string(messagesJson) == "null" {
+		messagesJson = []byte("[]")
+	}
+
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")

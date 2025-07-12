@@ -12,7 +12,13 @@ function AllConversations() {
     useEffect(() => {
         if(loading){
             fetch("/api/conversations", {
-                method: "GET"
+                method: "GET",
+                headers: {
+                    Accept: "application/json",
+                    "Content-type": "application/json",
+                    "X-CSRF-Token": localStorage.getItem("csrfToken"),
+                },
+                credentials: "same-origin",
             })
             .then((response) => response.json())
             .then((data) => {
@@ -119,6 +125,7 @@ function AddFriend({ returnData }) {
             headers: {
                 Accept: "application/json",
                 "Content-type": "application/json",
+                "X-CSRF-Token": localStorage.getItem("csrfToken"),
             },
             credentials: "same-origin",
         })
@@ -155,6 +162,7 @@ function AddFriend({ returnData }) {
             headers: {
                 Accept: "application/json",
                 "Content-type": "application/json",
+                "X-CSRF-Token": localStorage.getItem("csrfToken"),
             },
             credentials: "same-origin",
             body: JSON.stringify({Action: "addFriend", Id: id}),
@@ -191,7 +199,7 @@ function AddFriend({ returnData }) {
                         onClick={(e) => e.stopPropagation()}>
                         <form onSubmit={handleSubmit} className="w-full h-fit">
                             <div className="flex flex-row">
-                                <input
+                                <input autocomplete="off"
                                     placeholder="username"
                                     type="text"
                                     name="username"
@@ -252,7 +260,13 @@ function NewGroup({ returnData }) {
         setLoading(true);
         if(isOpen){
             fetch("/api/profiles/friends", {
-                method: "GET"
+                method: "GET",
+                headers: {
+                    Accept: "application/json",
+                    "Content-type": "application/json",
+                    "X-CSRF-Token": localStorage.getItem("csrfToken"),
+                },
+                credentials: "same-origin",
             })
             .then((response) => response.json())
             .then((data) => {
@@ -295,9 +309,10 @@ function NewGroup({ returnData }) {
             headers: {
                 Accept: "application/json",
                 "Content-type": "application/json",
+                "X-CSRF-Token": localStorage.getItem("csrfToken"),
             },
-            body: JSON.stringify({Action: "createGroup", Name: formData.name, Users: addedFriends}),
             credentials: "same-origin",
+            body: JSON.stringify({Action: "createGroup", Name: formData.name, Users: addedFriends}),
         })
         .then(response => response.json())
         .then(data => {
@@ -348,7 +363,7 @@ function NewGroup({ returnData }) {
                         onClick={(e) => e.stopPropagation()}>
                         <form onSubmit={handleSubmit} className="w-full h-fit">
                             <div className="flex flex-row">
-                                <input
+                                <input autocomplete="off"
                                     placeholder="Group name"
                                     type="text"
                                     name="name"
