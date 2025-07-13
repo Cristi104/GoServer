@@ -6,6 +6,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN go build -v -o /usr/local/bin/server ./...
+RUN ./scripts/generate_ssl_cert.sh
+RUN go build -v -o /usr/local/bin/server ./cmd/server
 
 CMD ["server"]

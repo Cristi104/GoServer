@@ -50,7 +50,7 @@ func SignInHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("Content-type", "application/json")
 
-	cookie := http.Cookie{Name: "auth", Value: signedToken, Path: "/", Secure: SERCURE, HttpOnly: true, SameSite: http.SameSiteLaxMode}
+	cookie := http.Cookie{Name: "auth", Value: signedToken, Path: "/", Secure: true, HttpOnly: true, SameSite: http.SameSiteLaxMode}
 	http.SetCookie(w, &cookie)
 
 	w.WriteHeader(http.StatusOK)
