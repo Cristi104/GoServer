@@ -1,9 +1,11 @@
 package handler
 
 import (
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 func isDirectory(path string) bool {
@@ -15,6 +17,15 @@ func isDirectory(path string) bool {
 }
 
 func FrontendHandler(w http.ResponseWriter, r *http.Request) {
+	if strings.Index(r.URL.String(), "/Messanger") == 0 {
+		_, err := authentifacateUser(r)
+		if err != nil {
+			log.Println(err)
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
+	}
+
 	buildDir := "./frontend/dist"
 	path := filepath.Join(buildDir, r.URL.Path)
 	_, err := os.Stat(path)

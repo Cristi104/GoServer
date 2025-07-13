@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html"
+	"log"
 	"net/http"
 	"regexp"
 	"unicode"
@@ -71,7 +72,8 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
-		http.Error(w, "error please try agian later", http.StatusBadRequest)
+		log.Println(err)
+		errorResponseJson(w, "error please try agian later", http.StatusBadRequest)
 		return
 	}
 
@@ -97,18 +99,21 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 
 	user, err := repository.InsertUser(data.Username, data.Email, data.Password)
 	if err != nil {
+		log.Println(err)
 		errorResponseJson(w, "email or username allready in use", http.StatusBadRequest)
 		return
 	}
 
 	userData, err := json.Marshal(user)
 	if err != nil {
+		log.Println(err)
 		errorResponseJson(w, "error please try agian later", http.StatusBadRequest)
 		return
 	}
 
 	signedToken, err := createAuthJWT(string(userData))
 	if err != nil {
+		log.Println(err)
 		errorResponseJson(w, "error please try agian later", http.StatusBadRequest)
 		return
 	}

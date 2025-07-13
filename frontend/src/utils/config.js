@@ -1,3 +1,3 @@
-const ENDPOINT_URL = "http://192.168.0.137:8080"
+const ENDPOINT_URL = ""
 
 export default ENDPOINT_URL

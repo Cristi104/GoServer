@@ -130,7 +130,7 @@ function Conversation() {
                     <>
                         <div ref={messageBox} className="w-full h-full overflow-y-auto no-scrollbar">
                             {messages.length != 0 ? messages.map((message, index) => (
-                                <div className={"grid grid-cols-1 max-w-3/4 w-fit p-1 h-fit bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors my-2 " + (message.SenderId == localStorage.getItem("userId") ? "ml-auto" : "mr-auto")}>
+                                <div className={"grid grid-cols-1 max-w-3/4 w-fit p-1 h-fit bg-blue-600 text-white rounded-lg my-2 " + (message.SenderId == localStorage.getItem("userId") ? "ml-auto" : "mr-auto")}>
                                     <div className="items-center justify-center">
                                         <p className="text-1xl text-gray-100">{nicknameMap.get(message.SenderId)}</p>
                                     </div>

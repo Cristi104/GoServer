@@ -56,8 +56,7 @@ function ProfilePreview() {
     return (
         <>
             <div className="w-full h-24 flex items-center justify-center bg-blue-200 my-1 rounded-md">
-                <button className="w-6/7 h-4/5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors my-3"
-                    onClick={(e) => {e.preventDefault(); navigate("/Messanger/Profile")}}>
+                <button className="w-full h-16 bg-blue-600 text-white rounded-lg m-3">
                     <p className="text-xl text-white p-1">{profile.nickname}</p>
                     <p className="text-xs text-gray-300 p-1">{profile.username}</p>
                 </button>

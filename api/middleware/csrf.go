@@ -54,7 +54,7 @@ func init() {
 	CsrfMiddleware = csrf.Protect(
 		[]byte(token.Key), 
 		csrf.Secure(token.Secure), 
-		csrf.HttpOnly(false), 
+		csrf.HttpOnly(true), 
 		csrf.Path("/"), 
 		csrf.CookieName("csrf"),
 		csrf.TrustedOrigins([]string{"localhost:8080", "192.168.0.137:8080"}),

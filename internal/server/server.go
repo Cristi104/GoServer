@@ -3,6 +3,8 @@ package server
 import (
 	"GoServer/api/handler"
 	"GoServer/api/middleware"
+	"crypto/tls"
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -48,5 +50,19 @@ func Run() error {
 
 	r.Get("/*", handler.FrontendHandler)
 
-	return http.ListenAndServe(":8080", r)
+	serverTLSCert, err := tls.LoadX509KeyPair("config/cert.pem", "config/key.pem")
+	if err != nil {
+		log.Fatalf("Error loading certificate and key file: %v", err)
+	}
+	tlsConfig := &tls.Config{
+		Certificates: []tls.Certificate{serverTLSCert},
+	}
+	server := http.Server{
+		Addr:      ":8080",
+		Handler:   r,
+		TLSConfig: tlsConfig,
+	}
+	defer server.Close()
+
+	return server.ListenAndServeTLS("", "")
 }

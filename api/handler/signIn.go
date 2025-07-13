@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html"
+	"log"
 	"net/http"
 )
 
@@ -18,7 +19,8 @@ func SignInHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
-		http.Error(w, "error please try agian later", http.StatusBadRequest)
+		log.Println(err)
+		errorResponseJson(w, "error please try agian later", http.StatusBadRequest)
 		return
 	}
 
@@ -27,18 +29,21 @@ func SignInHandler(w http.ResponseWriter, r *http.Request) {
 
 	user, err := repository.SelectUserBySignIn(data.Email, data.Password)
 	if err != nil {
+		log.Println(err)
 		errorResponseJson(w, "invalid email or password", http.StatusBadRequest)
 		return
 	}
 
 	userData, err := json.Marshal(user)
 	if err != nil {
+		log.Println(err)
 		errorResponseJson(w, "error please try agian later", http.StatusBadRequest)
 		return
 	}
 
 	signedToken, err := createAuthJWT(string(userData))
 	if err != nil {
+		log.Println(err)
 		errorResponseJson(w, "error please try agian later", http.StatusBadRequest)
 		return
 	}

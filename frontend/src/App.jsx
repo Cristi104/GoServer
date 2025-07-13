@@ -4,7 +4,6 @@ import ENDPOINT_URL from "./utils/config.js"
 import './index.css';
 import Layout from './pages/Layout.jsx';
 import Conversation from './pages/Conversation.jsx';
-import Profile from './pages/Profile.jsx';
 import PublicHomePage from './pages/PublicHomePage.jsx';
 import SignIn from './pages/SignIn.jsx';
 import SignUp from './pages/SignUp.jsx';
@@ -32,7 +31,6 @@ function App() {
                 <Route path="/Messanger" element={<Layout />}>
                     <Route index element={<Dashboard />} />
                     <Route path=":id" element={<Conversation />} />
-                    <Route path="Profile" element={<Profile />} />
                 </Route>
                 <Route path="*" element={<Navigate to="/" />} />
             </Routes>
